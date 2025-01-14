@@ -7,7 +7,13 @@ import open3d as o3d
 from sklearn.metrics import euclidean_distances
 from scipy.optimize import linear_sum_assignment
 
-sys.path.insert(0, os.path.join(os.getcwd(), "src", "application", "mobile_robotics_slam"))
+# Necessary to run the script from visual studio code
+path = __file__
+file_location_subfolders = 3 #Number of folder to go up to reach root of package
+for _ in range(file_location_subfolders):
+    path = os.path.dirname(path)
+sys.path.insert(0, path)
+
 from mobile_robotics_slam.Extractors.Corners.CornerExtractor import CornerExtractor
 corner_extractor = CornerExtractor()
 

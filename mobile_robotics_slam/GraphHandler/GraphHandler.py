@@ -7,7 +7,11 @@ from itertools import combinations
 import time
 
 
-sys.path.insert(0, os.path.join(os.getcwd(), "src", "application", "mobile_robotics_slam"))
+path = __file__
+file_location_subfolders = 4 #Number of folder to go up to reach root of package
+for _ in range(file_location_subfolders):
+    path = os.path.dirname(path)
+sys.path.insert(0, path)
 
 from mobile_robotics_slam.Optimizer.g2oGraphOptimizer import GraphOptimizer
 from mobile_robotics_slam.MapGenerator.OnlineMap import DynamicMapUpdater

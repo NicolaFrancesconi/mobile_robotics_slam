@@ -11,10 +11,11 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseArray, Pose
 
 
-# adding localization_lib to the system path
-sys.path.insert(
-    0, os.path.join(os.getcwd(), "src", "application", "mobile_robotics_slam")
-)
+path = __file__
+file_location_subfolders = 3 #Number of folder to go up to reach root of package
+for _ in range(file_location_subfolders):
+    path = os.path.dirname(path)
+sys.path.insert(0, path)
 
 
 from mobile_robotics_slam.Extractors.Corners.CornerExtractor import CornerExtractor
