@@ -19,7 +19,8 @@ sys.path.insert(0, path)
 
 from mobile_robotics_slam.Extractors.Reflectors.ReflectorExtractor import ReflectorExtractor
 from mobile_robotics_slam.Extractors.Corners.CornerExtractor import CornerExtractor
-from mobile_robotics_slam.GraphHandler.GraphHandler import GraphHandler
+from mobile_robotics_slam.GraphHandler.g2oGraphHandler import GraphHandler as g2oGraphHandler
+from mobile_robotics_slam.GraphHandler.GTSAMGraphHandler import GraphHandler as GTSAMGraphHandler
 from mobile_robotics_slam.ICP.ICP_SVD import icp
 
 
@@ -48,7 +49,8 @@ class GraphSLamNode(Node):
         self.corner_extractor = CornerExtractor()
         self.setup_extractor_parameters()
 
-        self.graph_handler = GraphHandler()
+        self.graph_handler = GTSAMGraphHandler()
+        #self.graph_handler = g2oGraphHandler()
 
         self.real_trajectory = []
         self.odom_trajectory = []

@@ -18,7 +18,7 @@ sys.path.insert(0, path)
 
 from mobile_robotics_slam.Extractors.Reflectors.ReflectorExtractor import ReflectorExtractor
 from mobile_robotics_slam.Extractors.Corners.CornerExtractor import CornerExtractor
-from mobile_robotics_slam.GraphHandler.GraphHandler import GraphHandler
+from mobile_robotics_slam.GraphHandler.g2oGraphHandler import GraphHandler
 from mobile_robotics_slam.ICP.ICP_SVD import icp
 
 
