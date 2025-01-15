@@ -56,7 +56,7 @@ class GraphSLamNode:
         self.unoptimized_graph = UnoptimizedGraph()
 
         self.odom_sub = message_filters.Subscriber("/dingo/odometry", Odometry)
-        self.scan_sub = message_filters.Subscriber("/diff_drive/scan", LaserScan)
+        self.scan_sub = message_filters.Subscriber("/scan", LaserScan)
         self.real_pose_sub = message_filters.Subscriber("/diff_drive/real_pose", Odometry)
 
         # Approximate time synchronizer
