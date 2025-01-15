@@ -1,4 +1,4 @@
-import rospy # type: ignore
+import rospy
 import os
 import sys
 import signal
@@ -10,6 +10,7 @@ from nav_msgs.msg import Odometry
 import time
 import message_filters
 
+# Necessary to run the script from visual studio code
 path = __file__
 file_location_subfolders = 3 #Number of folder to go up to reach root of package
 for _ in range(file_location_subfolders):
@@ -18,7 +19,7 @@ sys.path.insert(0, path)
 
 from mobile_robotics_slam.Extractors.Reflectors.ReflectorExtractor import ReflectorExtractor
 from mobile_robotics_slam.Extractors.Corners.CornerExtractor import CornerExtractor
-from mobile_robotics_slam.GraphHandler.g2oGraphHandler import GraphHandler
+from mobile_robotics_slam.GraphHandler.GTSAMGraphHandler import GraphHandler as GTSAMGraphHandler
 from mobile_robotics_slam.ICP.ICP_SVD import icp
 
 
@@ -41,13 +42,13 @@ class GraphSLamNode:
         self.robot_pose_x = None
         self.robot_pose_y = None
         self.robot_pose_phi = None
-        self.displacement = np.array([0.0, 0.0, 0.0])
+        self.displacement = np.zeros(3)
         self.first_pose_added = False
         self.reflector_extractor = ReflectorExtractor()
         self.corner_extractor = CornerExtractor()
         self.setup_extractor_parameters()
 
-        self.graph_handler = GraphHandler()
+        self.graph_handler = GTSAMGraphHandler()
 
         self.real_trajectory = []
         self.odom_trajectory = []
