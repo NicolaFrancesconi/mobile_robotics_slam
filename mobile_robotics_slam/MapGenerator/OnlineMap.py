@@ -7,11 +7,20 @@ import os
 
 class DynamicMapUpdater:
     def __init__(self):
+        print("DYNAMIC MAP STARTED")
         self.data_queue = multiprocessing.Queue()
         self.process = multiprocessing.Process(target=self._update_map, args=(self.data_queue,))
         self.process.daemon = True   # Ensures the thread closes with the main program
         self.update_interval = 0.1  # Update every 100ms
-        self.frames_dir = "frames"  # Directory to save frames
+        
+        path = __file__
+        file_location_subfolders = 3 #Number of folder to go up to reach root of package
+        for _ in range(file_location_subfolders):
+            path = os.path.dirname(path)
+
+        
+        self.frames_dir = os.path.join(path, "frames")
+        print(path)
         self.gif_path = "dynamic_map_no_icp.gif"  # Path for the final GIF
 
         # Create frames directory if it doesn't exist
@@ -46,12 +55,13 @@ class DynamicMapUpdater:
         plt.ion()  # Enable interactive mode
         fig, ax = plt.subplots()
         
-        angles = np.linspace(-np.pi, np.pi, 4000)
+        
         frame_count = 0
         while True:
             try:
                 # Retrieve latest data
                 poses, landmarks, ranges = data_queue.get(timeout=self.update_interval)
+                
                 ax.clear()
                 print("Updating Map")
 
@@ -66,6 +76,7 @@ class DynamicMapUpdater:
                     poses = np.array(poses)
                     ax.plot(poses[:, 0], poses[:, 1], "orange", label='Optimized Trajectory')
                     for pose, range in zip(poses, ranges):
+                        angles = np.linspace(-np.pi, np.pi, len(range))
                         x = pose[0] + range * np.cos(angles + pose[2])
                         y = pose[1] + range * np.sin(angles + pose[2])
                         x, y = x[range < 9], y[range < 9]

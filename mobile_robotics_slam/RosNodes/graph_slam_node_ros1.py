@@ -55,15 +55,14 @@ class GraphSLamNode:
 
         self.unoptimized_graph = UnoptimizedGraph()
 
-        self.odom_sub = message_filters.Subscriber("/dingo/odometry", Odometry)
+        self.odom_sub = message_filters.Subscriber("/odometry/filtered", Odometry)
         self.scan_sub = message_filters.Subscriber("/scan", LaserScan)
-        self.real_pose_sub = message_filters.Subscriber("/diff_drive/real_pose", Odometry)
 
         # Approximate time synchronizer
         self.sync = message_filters.ApproximateTimeSynchronizer(
-            [self.odom_sub, self.scan_sub, self.real_pose_sub],
+            [self.odom_sub, self.scan_sub],
             queue_size=30,
-            slop=0.0001  # Max difference between timestamps
+            slop=0.001  # Max difference between timestamps
         )
         self.sync.registerCallback(self.synchronized_callback)
 
@@ -120,19 +119,17 @@ class GraphSLamNode:
         return np.array([x,y,theta])
 
 
-    def synchronized_callback(self, odom: Odometry, scan: LaserScan, real: Odometry):
+    def synchronized_callback(self, odom: Odometry, scan: LaserScan):
         if (self.OptimizedLastNodePose[0] is None) or (self.OdomLastNodePose[0] is None):
             self.OdomLastNodePose = np.array([odom.pose.pose.position.x, odom.pose.pose.position.y, self.quaternion_to_euler(odom.pose.pose.orientation.x,odom.pose.pose.orientation.y,odom.pose.pose.orientation.z,odom.pose.pose.orientation.w)])
-            #self.OdomLastNodePose = np.array([real.pose.pose.position.x, real.pose.pose.position.y, self.quaternion_to_euler(real.pose.pose.orientation.x,real.pose.pose.orientation.y,real.pose.pose.orientation.z,real.pose.pose.orientation.w)])
-            
+
             self.OptimizedLastNodePose = np.zeros(3)
             robot_estimated_pose = np.zeros(3)
         
 
         # Store ODOM and REAL pose for Visualization
-        real_pose = np.array([real.pose.pose.position.x, real.pose.pose.position.y, self.quaternion_to_euler(real.pose.pose.orientation.x,real.pose.pose.orientation.y,real.pose.pose.orientation.z,real.pose.pose.orientation.w)])
         odom_pose = np.array([odom.pose.pose.position.x, odom.pose.pose.position.y, self.quaternion_to_euler(odom.pose.pose.orientation.x,odom.pose.pose.orientation.y,odom.pose.pose.orientation.z,odom.pose.pose.orientation.w)])
-        #odom_pose = np.copy(real_pose)
+
 
         Ho, travel_distance, rotation = self.compute_homo_transform(self.OdomLastNodePose, odom_pose)
         
@@ -165,13 +162,12 @@ class GraphSLamNode:
             self.OptimizedLastNodePose = self.graph_handler.add_to_graph(robot_estimated_pose, np.array(scan.ranges), landmarks)
             
             self.odom_trajectory.append(np.copy(odom_pose))
-            self.real_trajectory.append(np.copy(real_pose))
             self.unoptimized_graph.add_pose(odom_pose, np.array(scan.ranges), landmarks)
 
             print("\n\nTime For Processing: ", time.time() - start_time)
             print(f"Odom Estimate: {self.OdomLastNodePose}")      
             print(f"Estimated Pose: {robot_estimated_pose}")
-            print(f"Real Pose: {real_pose}")                           
+                        
 
 
     def points_3d_from_scan_and_pose(self, scan, robot_estimated_pose=np.zeros(3), max_range=np.inf, downsample=1):
