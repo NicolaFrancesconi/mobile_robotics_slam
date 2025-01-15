@@ -7,3 +7,4 @@ rosbag2*
 *.txt
 *.g2o
 *.austin
+*.png
