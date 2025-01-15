@@ -1,4 +1,4 @@
-import rospy
+import rospy # type: ignore
 import os
 import sys
 import signal
