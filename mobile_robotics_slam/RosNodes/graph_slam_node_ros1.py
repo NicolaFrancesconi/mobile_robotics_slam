@@ -20,6 +20,7 @@ sys.path.insert(0, path)
 from mobile_robotics_slam.Extractors.Reflectors.ReflectorExtractor import ReflectorExtractor
 from mobile_robotics_slam.Extractors.Corners.CornerExtractor import CornerExtractor
 from mobile_robotics_slam.GraphHandler.GTSAMGraphHandler import GraphHandler as GTSAMGraphHandler
+from mobile_robotics_slam.MotionCompensation.MotionCompensation import LaserMotionCompensator as MotionCompensator
 from mobile_robotics_slam.ICP.ICP_SVD import icp
 
 
@@ -36,6 +37,8 @@ class GraphSLamNode:
         # Initialize the ROS node
         rospy.init_node("graph_slam_node", anonymous=True)
 
+        self.image_number = 0
+
         # Declare variables
         self.OdomLastNodePose = np.array([None, None, None])
         self.OptimizedLastNodePose = np.array([None, None, None])
@@ -49,6 +52,7 @@ class GraphSLamNode:
         self.setup_extractor_parameters()
 
         self.graph_handler = GTSAMGraphHandler()
+        self.motion_compensator = MotionCompensator()
 
         self.real_trajectory = []
         self.odom_trajectory = []
@@ -62,7 +66,7 @@ class GraphSLamNode:
         self.sync = message_filters.ApproximateTimeSynchronizer(
             [self.odom_sub, self.scan_sub],
             queue_size=30,
-            slop=0.001  # Max difference between timestamps
+            slop=0.02  # Max difference between timestamps
         )
         self.sync.registerCallback(self.synchronized_callback)
 
@@ -120,6 +124,26 @@ class GraphSLamNode:
 
 
     def synchronized_callback(self, odom: Odometry, scan: LaserScan):
+
+        corrected_scan = self.motion_compensator.motion_compensation_pointcloud(scan, odom) # Is a column stack of x, y, intensity
+        
+        # Plot the corrected scan and the original scan
+        plt.figure()
+        plt.title("Motion Compensated Scan")
+        x_original = scan.ranges * np.cos(np.linspace(scan.angle_min, scan.angle_max, len(scan.ranges)))
+        y_original = scan.ranges * np.sin(np.linspace(scan.angle_min, scan.angle_max, len(scan.ranges)))
+        x_corrected = corrected_scan[:, 0]
+        y_corrected = corrected_scan[:, 1]
+        plt.scatter(x_original, y_original, c='r', s=1)
+        plt.scatter(x_corrected, y_corrected, c='b', s=1)
+        plt.axis('equal')
+        plt.legend(['Original Scan', 'Corrected Scan'])
+        #Since i cant visualize it, save it to a file
+        plt.savefig(f"corrected_scan{self.image_number}.png")
+        plt.close()
+        self.image_number += 1
+        return
+
         if (self.OptimizedLastNodePose[0] is None) or (self.OdomLastNodePose[0] is None):
             self.OdomLastNodePose = np.array([odom.pose.pose.position.x, odom.pose.pose.position.y, self.quaternion_to_euler(odom.pose.pose.orientation.x,odom.pose.pose.orientation.y,odom.pose.pose.orientation.z,odom.pose.pose.orientation.w)])
 
