@@ -4,7 +4,7 @@ class LaserMotionCompensator():
         def __init__(self):
                 self.laser_x_pos = -0.109
                 self.laser_y_pos = 0.0
-                self.laser_frequency = 9.915
+                self.laser_frequency = 10
 
                 self.rot_correction = 0.014 # rad
                 
@@ -25,14 +25,17 @@ class LaserMotionCompensator():
 
         def base_to_laser_accelerations(self, odometry_timestamp):
                 '''Converts accelerations from base frame to laser frame'''
-                t = odometry_timestamp.seconds + odometry_timestamp.nanoseconds * 1e-9
+                t = odometry_timestamp.secs + odometry_timestamp.nsecs * 1e-9
                 dt = t - self.previous_timestamp
-                self.previous_timestamp = t.copy()
+                self.previous_timestamp = t
+
+                print("DT:" , dt)
 
                 x_acc_lidar = (self.velocity_estimate[0] - self.previous_velocity_estimate[0]) / dt
                 y_acc_lidar = (self.velocity_estimate[1] - self.previous_velocity_estimate[1]) / dt
                 rot_acc_lidar = (self.velocity_estimate[2] - self.previous_velocity_estimate[2]) / dt
 
+                
                 # x_acc_lidar = x_acc - self.laser_y_pos * rot_acc
                 # y_acc_lidar = y_acc + self.laser_x_pos * rot_acc
                 # rot_acc_lidar = rot_acc  
@@ -48,17 +51,23 @@ class LaserMotionCompensator():
                 time_i = np.arange(laser_n_points) / (self.laser_frequency*laser_n_points) # Time Interval Between Start Of Scan and Scan of Point i
 
                 self.velocity_estimate = self.base_to_laser_velocities(odometry.twist.twist.linear.x, odometry.twist.twist.linear.y, odometry.twist.twist.angular.z)
-                self.acceleration_estimate = self.base_to_laser_accelerations(odometry.timestamp)
+                #self.acceleration_estimate = self.base_to_laser_accelerations(odometry.header.stamp)
                 
-                x_correction = - (self.velocity_estimate[0] * time_i + 0.5 * self.acceleration_estimate[0] * (time_i**2))
-                y_correction = - (self.velocity_estimate[1] * time_i + 0.5 * self.acceleration_estimate[1] * (time_i**2))
-                angle_correction = - (self.velocity_estimate[2] * time_i + 0.5 * self.acceleration_estimate[2] * (time_i**2))
+                x_correction = + (self.velocity_estimate[0] * time_i + 0.5 * self.acceleration_estimate[0] * (time_i**2))
+                y_correction = + (self.velocity_estimate[1] * time_i + 0.5 * self.acceleration_estimate[1] * (time_i**2))
+                angle_correction = + (self.velocity_estimate[2] * time_i + 0.5 * self.acceleration_estimate[2] * (time_i**2))
         
                 # Apply translations
-                x = laser_scan.ranges * np.cos(angles+angle_correction) + x_correction
-                y = laser_scan.ranges * np.sin(angles+angle_correction) + y_correction
+                x = laser_scan.ranges * np.cos(angles+angle_correction) - x_correction
+                y = laser_scan.ranges * np.sin(angles+angle_correction) - y_correction
+
+                print("Last Point is corrected by:", x_correction[-1])
 
                 self.previous_velocity_estimate = self.velocity_estimate.copy()
+
+                print("Laser Is Mooving at velocity:\n")
+                print(f"Linear:\n\tx{self.previous_velocity_estimate[0]} \n\ty:{self.previous_velocity_estimate[1]}\n\ttheta:{self.previous_velocity_estimate[2]}")
+
 
                 return np.column_stack((x, y, intensity))
 

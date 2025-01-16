@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.neighbors import NearestNeighbors
 
 
-def icp(source, target, init_transform=None, max_iterations=30, tolerance=1e-4, max_ass_distance=1.0, downsample=1, max_range=90):
+def icp(source, target, init_transform=None, max_iterations=30, tolerance=1e-6, max_ass_distance=1.0, downsample=1, max_range=90):
     '''
     The Iterative Closest Point method: finds best-fit transform that maps points A on to points B
     Input:

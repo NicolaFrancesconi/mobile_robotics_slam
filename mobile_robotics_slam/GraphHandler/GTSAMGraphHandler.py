@@ -191,7 +191,7 @@ class GraphHandler:
         self.add_non_matched_corners(extracted_corners, pose_id, landmarks, non_matched_indices_cor, mapped_corners)
         self.add_non_matched_reflectors(extracted_reflectors, pose_id, landmarks, non_matched_indices_ref, mapped_reflectors)
 
-        if  len(self.pose_vertices) % 15 ==0 or len(self.pose_vertices) >= 539 or match_cor or match_ref :
+        if  len(self.pose_vertices) % 1 ==0 or len(self.pose_vertices) >= 539 or match_cor or match_ref :
             pass
             self.optimize_graph()
         if len(self.pose_vertices) >= 539:

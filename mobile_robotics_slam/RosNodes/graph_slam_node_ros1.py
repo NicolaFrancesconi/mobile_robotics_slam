@@ -39,6 +39,7 @@ class GraphSLamNode:
 
         self.image_number = 0
 
+
         # Declare variables
         self.OdomLastNodePose = np.array([None, None, None])
         self.OptimizedLastNodePose = np.array([None, None, None])
@@ -65,7 +66,7 @@ class GraphSLamNode:
         # Approximate time synchronizer
         self.sync = message_filters.ApproximateTimeSynchronizer(
             [self.odom_sub, self.scan_sub],
-            queue_size=30,
+            queue_size=10,
             slop=0.02  # Max difference between timestamps
         )
         self.sync.registerCallback(self.synchronized_callback)
@@ -125,24 +126,30 @@ class GraphSLamNode:
 
     def synchronized_callback(self, odom: Odometry, scan: LaserScan):
 
-        corrected_scan = self.motion_compensator.motion_compensation_pointcloud(scan, odom) # Is a column stack of x, y, intensity
+        # print("Time",odom.header.stamp.secs + odom.header.stamp.nsecs*1e9)
+
+        # corrected_scan = self.motion_compensator.motion_compensation_pointcloud(scan, odom) # Is a column stack of x, y, intensity
         
-        # Plot the corrected scan and the original scan
-        plt.figure()
-        plt.title("Motion Compensated Scan")
-        x_original = scan.ranges * np.cos(np.linspace(scan.angle_min, scan.angle_max, len(scan.ranges)))
-        y_original = scan.ranges * np.sin(np.linspace(scan.angle_min, scan.angle_max, len(scan.ranges)))
-        x_corrected = corrected_scan[:, 0]
-        y_corrected = corrected_scan[:, 1]
-        plt.scatter(x_original, y_original, c='r', s=1)
-        plt.scatter(x_corrected, y_corrected, c='b', s=1)
-        plt.axis('equal')
-        plt.legend(['Original Scan', 'Corrected Scan'])
-        #Since i cant visualize it, save it to a file
-        plt.savefig(f"corrected_scan{self.image_number}.png")
-        plt.close()
-        self.image_number += 1
-        return
+        
+        # # Plot the corrected scan and the original scan
+        # plt.figure()
+        # plt.title("Motion Compensated Scan")
+        # x_original = scan.ranges * np.cos(np.linspace(scan.angle_min, scan.angle_max, len(scan.ranges)))
+        # y_original = scan.ranges * np.sin(np.linspace(scan.angle_min, scan.angle_max, len(scan.ranges)))
+        # x_corrected = corrected_scan[:, 0]
+        # y_corrected = corrected_scan[:, 1]
+        # plt.scatter(x_original, y_original, c='r', s=1)
+        # plt.scatter(x_corrected, y_corrected, c='b', s=0.1)
+        # plt.xlim((-3, 3))
+        # plt.ylim((-3, 3))
+        # plt.legend(['Original Scan', 'Corrected Scan'])
+        # #Since i cant visualize it, save it to a file
+        # if self.image_number < 50:
+        #     plt.savefig(os.path.join(path, f"corrected_scan{self.image_number}.png"))
+        #     print("Saved Image:", self.image_number)
+        # plt.close()
+        # self.image_number += 1
+        # return
 
         if (self.OptimizedLastNodePose[0] is None) or (self.OdomLastNodePose[0] is None):
             self.OdomLastNodePose = np.array([odom.pose.pose.position.x, odom.pose.pose.position.y, self.quaternion_to_euler(odom.pose.pose.orientation.x,odom.pose.pose.orientation.y,odom.pose.pose.orientation.z,odom.pose.pose.orientation.w)])
@@ -169,7 +176,7 @@ class GraphSLamNode:
                 current_points = np.vstack((current_scan*cos, current_scan*sin)).T
                 previous_points = np.vstack((previous_scan*cos, previous_scan*sin)).T
                 times = time.time()
-                H_icp = icp(current_points, previous_points, init_transform=Ho, downsample=8, max_iterations=30, max_range=15)
+                H_icp = icp(current_points, previous_points, init_transform=Ho, downsample=1, max_iterations=30, max_range=15)
                 print("Time For ICP", time.time() - times)
                 robot_estimated_pose = self.transform_to_pose(Tr@H_icp)
 
@@ -177,8 +184,8 @@ class GraphSLamNode:
             reflectors = []
             corners = []
 
-            reflectors = self.extract_reflectors(scan, robot_estimated_pose)
-            #corners = self.extract_corners(scan, robot_estimated_pose)
+            #reflectors = self.extract_reflectors(scan, robot_estimated_pose)
+            corners = self.extract_corners(scan, robot_estimated_pose)
             landmarks = reflectors + corners
             
             self.OdomLastNodePose = np.copy(odom_pose)
@@ -302,10 +309,11 @@ class GraphSLamNode:
 
     def signal_handler(self, sig, frame):
         # Generate the map of the environment given the optimized graph
-        self.unoptimized_graph.generate_map()
-        self.graph_handler.generate_map(real_trajectory=self.real_trajectory, odom_trajectory=self.odom_trajectory)
-        self.graph_handler.generate_dynamic_map()
-        self.graph_handler.dynamic_map.stop()
+        rospy.signal_shutdown("Shutting down gracefully.")
+        # self.unoptimized_graph.generate_map()
+        # self.graph_handler.generate_map(real_trajectory=self.real_trajectory, odom_trajectory=self.odom_trajectory)
+        # self.graph_handler.generate_dynamic_map()
+        # self.graph_handler.dynamic_map.stop()
         rospy.signal_shutdown("Shutting down gracefully.")
 
         
