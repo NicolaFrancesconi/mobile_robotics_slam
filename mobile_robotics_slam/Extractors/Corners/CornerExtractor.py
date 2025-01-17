@@ -23,6 +23,7 @@ class Corner:
         self.orientation = self.compute_orientation()
         self.orientation_quaternion = self.orientation_to_quaternion(self.orientation)
         #self.descriptor = self.BinaryShapeContextDescriptor(1, 16, 2)
+        
 
     def get_position(self):
         return np.array([self.x, self.y])
@@ -67,7 +68,8 @@ class CornerExtractor:
         self.max_intersecton_distance = None
         self.min_corner_angle = None
         self.max_corner_angle = None
-
+        self.max_extraction_range = 4
+        self.image_cnt = 0
     def set_corner_params(self, max_intersecton_distance, min_corner_angle, max_corner_angle):
         """Set the parameter of the Corner Extractor
         Input: 
@@ -160,6 +162,7 @@ class CornerExtractor:
                             (np.linalg.norm(intersection - endpoints1[0]) < max_distance or
                             np.linalg.norm(intersection - endpoints1[1]) < max_distance)):
                             corners.append(Corner(x_intersection, y_intersection, angle_error, segment, other_segment))
+        
         self.corners = corners
         
     
@@ -188,7 +191,7 @@ class CornerExtractor:
         #self.segment_handler.merge_similar_lines_segments(np.deg2rad(10), 0.08, 1)
         self.find_corners()
 
-    def plot_corners(self):
+    def plot_corners(self, path=os.path.dirname(__file__), ranges=None):
         if self.corners is None:    
             raise ValueError("Corners not computed")
         plt.figure()
@@ -199,6 +202,12 @@ class CornerExtractor:
             x= [point[0] for point in segment.points]
             y= [point[1] for point in segment.points]
             plt.plot(x, y,  label = "Segment"+str(i))
+
+        if ranges is not None:
+            angles = np.linspace(-np.pi, np.pi, len(ranges))
+            x = ranges* np.cos(angles)
+            y= ranges* np.sin(angles)
+            plt.scatter(x, y, color='yellow', s=1, label = "LaserScan")
 
 
         x_corn  = []
@@ -212,6 +221,8 @@ class CornerExtractor:
         plt.xlabel('x')
         plt.ylabel('y')
         plt.axis('equal')
+        plt.savefig(os.path.join(path, f"Corners{self.image_cnt}.png"))
+        self.image_cnt += 1
         plt.legend()
         plt.show() 
 

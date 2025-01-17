@@ -24,8 +24,18 @@ from mobile_robotics_slam.MotionCompensation.MotionCompensation import LaserMoti
 from mobile_robotics_slam.ICP.ICP_SVD import icp
 
 
-DISTANCE_THRESHOLD = 0.4
-ROTATION_THRESHOLD = np.deg2rad(5)
+DISTANCE_THRESHOLD = 0.2
+ROTATION_THRESHOLD = np.deg2rad(3)
+
+def remove_png_files(folder_path):
+    try:
+        for file_name in os.listdir(folder_path):
+            if file_name.endswith(".png"):
+                file_path = os.path.join(folder_path, file_name)
+                os.remove(file_path)
+                print(f"Removed: {file_path}")
+    except Exception as e:
+        print(f"Error: {e}")
 
 
 class GraphSLamNode:
@@ -39,6 +49,7 @@ class GraphSLamNode:
 
         self.image_number = 0
 
+        remove_png_files(path)
 
         # Declare variables
         self.OdomLastNodePose = np.array([None, None, None])
@@ -77,22 +88,22 @@ class GraphSLamNode:
 
     def setup_extractor_parameters(self):
         # Set the parameters of the Corner Extractor
-        min_corner_angle = 85
-        max_corner_angle = 95
-        max_intersecton_distance = 0.5
+        min_corner_angle = 80
+        max_corner_angle = 100
+        max_intersecton_distance = 0.3
         self.corner_extractor.set_corner_params(max_intersecton_distance, min_corner_angle, max_corner_angle)
 
         # Set the parameters of the Adaptive Segment Detector
-        sigma_ranges = 0.15
+        sigma_ranges = 0.20
         lambda_angle = 10
-        merge_distance = 0.07
-        min_points_density = 10
-        min_segment_length = 0.5
+        merge_distance = 0.15
+        min_points_density = 3
+        min_segment_length = 0.15
         self.corner_extractor.set_detector_params(sigma_ranges, lambda_angle, merge_distance, min_points_density, min_segment_length)
 
         # Set the parameters of the Segment Handler
-        epsilon = 0.1
-        min_density_after_segmentation = 12
+        epsilon = 0.12
+        min_density_after_segmentation = 7
         min_length_after_segmentation = 0.3
         self.corner_extractor.set_handler_params(epsilon, min_density_after_segmentation, min_length_after_segmentation)
 
@@ -161,7 +172,6 @@ class GraphSLamNode:
         # Store ODOM and REAL pose for Visualization
         odom_pose = np.array([odom.pose.pose.position.x, odom.pose.pose.position.y, self.quaternion_to_euler(odom.pose.pose.orientation.x,odom.pose.pose.orientation.y,odom.pose.pose.orientation.z,odom.pose.pose.orientation.w)])
 
-
         Ho, travel_distance, rotation = self.compute_homo_transform(self.OdomLastNodePose, odom_pose)
         
         if travel_distance > DISTANCE_THRESHOLD or rotation > ROTATION_THRESHOLD or not self.first_pose_added:
@@ -179,8 +189,10 @@ class GraphSLamNode:
                 H_icp = icp(current_points, previous_points, init_transform=Ho, downsample=1, max_iterations=30, max_range=15)
                 print("Time For ICP", time.time() - times)
                 robot_estimated_pose = self.transform_to_pose(Tr@H_icp)
+                
 
-            self.first_pose_added = True
+
+            
             reflectors = []
             corners = []
 
@@ -196,8 +208,12 @@ class GraphSLamNode:
             self.unoptimized_graph.add_pose(odom_pose, np.array(scan.ranges), landmarks)
 
             print("\n\nTime For Processing: ", time.time() - start_time)
-            print(f"Odom Estimate: {self.OdomLastNodePose}")      
+            print(f"Odom Estimate: {self.OdomLastNodePose}")
+            if self.first_pose_added:
+                print(f"ICP Estimated Pose: {self.transform_to_pose(Tr@H_icp)}") 
+                 
             print(f"Estimated Pose: {robot_estimated_pose}")
+            self.first_pose_added = True
                         
 
 

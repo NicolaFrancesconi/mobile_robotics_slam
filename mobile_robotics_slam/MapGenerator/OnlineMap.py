@@ -11,7 +11,7 @@ class DynamicMapUpdater:
         self.data_queue = multiprocessing.Queue()
         self.process = multiprocessing.Process(target=self._update_map, args=(self.data_queue,))
         self.process.daemon = True   # Ensures the thread closes with the main program
-        self.update_interval = 0.1  # Update every 100ms
+        self.update_interval = 2  # Update every 100ms
         
         path = __file__
         file_location_subfolders = 3 #Number of folder to go up to reach root of package
@@ -41,7 +41,7 @@ class DynamicMapUpdater:
 
 
     def add_data(self, poses, landmarks, points):
-        while self.data_queue.qsize() >= 4:
+        while self.data_queue.qsize() >= 2:
             try:
                 self.data_queue.get_nowait()  # Remove the oldest data
             except Empty:
@@ -52,7 +52,7 @@ class DynamicMapUpdater:
         
 
     def _update_map(self, data_queue):
-        plt.ion()  # Enable interactive mode
+        #plt.ion()  # Enable interactive mode
         fig, ax = plt.subplots()
         
         
@@ -89,7 +89,7 @@ class DynamicMapUpdater:
                 # Plot landmarks
                 if landmarks is not None and len(landmarks) > 0:
                     landmarks = np.array(landmarks)
-                    ax.scatter(landmarks[:, 0], landmarks[:, 1], c="r", label="Landmarks")
+                    ax.scatter(landmarks[:, 0], landmarks[:, 1], c="r", label="Corners", s=4)
 
                 ax.set_title("Dynamic Map")
                 ax.set_aspect('equal')

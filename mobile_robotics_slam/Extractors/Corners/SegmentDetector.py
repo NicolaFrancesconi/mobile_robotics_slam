@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 class SegmentDetector:
     def __init__(self):
@@ -15,6 +16,8 @@ class SegmentDetector:
         self.merge_distance = None
         self.min_points_density = None
         self.min_segment_length = None
+
+        self.image_cnt = 0
 
     def set_merge_distance(self, merge_distance):
         """Sets the merge distance threshold"""
@@ -142,7 +145,13 @@ class SegmentDetector:
             y = segment_ranges * np.sin(segment_angles+ robot_pose[2]) + robot_pose[1]
             segment_positions = np.array([x, y]).T
 
-            segments.append(segment_positions)
+            distances = np.sqrt(segment_positions[:, 0]**2 + segment_positions[:, 1]**2)
+
+            # Remove points with distance less than the threshold
+            filtered_positions = segment_positions[distances >= 0.2]
+
+
+            segments.append(filtered_positions)
         self.segments = segments
 
     def merge_close_segments(self):
@@ -201,7 +210,7 @@ class SegmentDetector:
         original_length = len(self.segments)
         self.segments = [segment for segment in self.segments if len(segment) > min_density]         
 
-    def plot_segments_and_scan(self):
+    def plot_segments_and_scan(self, path=os.path.dirname(__file__)):
         """Plots the segments"""
         if self.segments is None:
             raise ValueError("Segments should be detected before plotting")
@@ -212,6 +221,7 @@ class SegmentDetector:
         y = self.ranges * np.sin(self.angles)
         plt.scatter(x, y, s=1, label='Laser Scan Data', color='yellow')
 
+        print("Segments:", len(self.segments))
         for i ,segment in enumerate(self.segments):
             x = [point[0] for point in segment]
             y = [point[1] for point in segment]
@@ -219,9 +229,11 @@ class SegmentDetector:
 
         plt.xlabel("X")
         plt.ylabel("Y")
-        plt.legend()
+        #plt.legend()
         plt.title("Detected Segments in Synthetic Laser Scan Data")
         plt.axis("equal")
+        plt.savefig(os.path.join(path, f"segments{self.image_cnt}.png"))
+        self.image_cnt += 1
         plt.show()
 
     def plot_detected_breakpoints(self):

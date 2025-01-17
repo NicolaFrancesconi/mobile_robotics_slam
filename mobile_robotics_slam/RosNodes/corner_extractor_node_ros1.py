@@ -15,6 +15,17 @@ sys.path.insert(0, path)
 
 from mobile_robotics_slam.Extractors.Corners.CornerExtractor import CornerExtractor
 
+def remove_png_files(folder_path):
+    try:
+        for file_name in os.listdir(folder_path):
+            if file_name.endswith(".png"):
+                file_path = os.path.join(folder_path, file_name)
+                os.remove(file_path)
+                print(f"Removed: {file_path}")
+    except Exception as e:
+        print(f"Error: {e}")
+
+
 class MyCornerExtractor:
 
     def __init__(self):
@@ -28,6 +39,9 @@ class MyCornerExtractor:
         self.extractor = CornerExtractor()
         self.setup_extractor_parameters()
 
+        #print("Path To remove png", path)
+        remove_png_files(path)
+
         self.keypoints_publisher = rospy.Publisher("/corner_keypoints", MarkerArray, queue_size=10)
         self.corner_poses_publisher = rospy.Publisher("/corner_poses", PoseArray, queue_size=10)
 
@@ -38,21 +52,21 @@ class MyCornerExtractor:
         # Set the parameters of the Corner Extractor
         min_corner_angle = 70
         max_corner_angle = 110
-        max_intersecton_distance = 0.8
+        max_intersecton_distance = 0.3
         self.extractor.set_corner_params(max_intersecton_distance, min_corner_angle, max_corner_angle)
 
         # Set the parameters of the Adaptive Segment Detector
         sigma_ranges = 0.20
         lambda_angle = 10
-        merge_distance = 0.1
-        min_points_density = 2
-        min_segment_length = 0.5
+        merge_distance = 0.15
+        min_points_density = 4
+        min_segment_length = 0.1
         self.extractor.set_detector_params(sigma_ranges, lambda_angle, merge_distance, min_points_density, min_segment_length)
 
         # Set the parameters of the Segment Handler
-        epsilon = 0.2
-        min_density_after_segmentation = 10
-        min_length_after_segmentation = 0.9
+        epsilon = 0.12
+        min_density_after_segmentation = 4
+        min_length_after_segmentation = 0.2
         self.extractor.set_handler_params(epsilon, min_density_after_segmentation, min_length_after_segmentation)
 
     def pose_callback(self, msg):
@@ -81,17 +95,22 @@ class MyCornerExtractor:
         self.extractor.extract_corners(ranges, field_of_view, angle_min)
         corners = self.extractor.get_corners()
 
+        self.extractor.plot_corners(path, ranges)
+        #self.extractor.segment_detector.plot_segments_and_scan(path)
+
         # Publish the keypoints as markers
         keypoints_markers = self.generate_markers_from_keypoints(corners, [1.0, 0.0, 0.0], 0, scan_time)
         self.generate_poses_from_keypoint(corners, scan_time)
         self.keypoints_publisher.publish(keypoints_markers)
         rospy.loginfo("Extracted keypoints: %d", len(corners))
+        #rospy.signal_shutdown("Shutting down gracefully.")
+        
 
     def generate_poses_from_keypoint(self, keypoints, timestamp):
         """Generates poses from the keypoints given the color and the base index"""
 
         poses = PoseArray()
-        poses.header.frame_id = "lidar_link"
+        poses.header.frame_id = "velodyne"
         poses.header.stamp = timestamp
         for idx, keypoint in enumerate(keypoints):
             pose = Pose()
@@ -112,13 +131,14 @@ class MyCornerExtractor:
         markers = MarkerArray()
         for idx, keypoint in enumerate(keypoints):
             marker = Marker()
-            marker.header.frame_id = "lidar_link"
+            marker.header.frame_id = "velodyne"
             marker.header.stamp = timestamp
             marker.id = idx + base_idx
             marker.type = Marker.SPHERE
             marker.action = Marker.ADD
             marker.pose.position.x = float(keypoint.x)
             marker.pose.position.y = float(keypoint.y)
+            #rospy.loginfo("Corner Position:", keypoint.x, keypoint.y)
             marker.pose.position.z = 0.0
             marker.pose.orientation.x = 0.0
             marker.pose.orientation.y = 0.0
