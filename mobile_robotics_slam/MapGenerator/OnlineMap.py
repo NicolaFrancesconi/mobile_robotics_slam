@@ -79,7 +79,7 @@ class DynamicMapUpdater:
                         angles = np.linspace(-np.pi, np.pi, len(range))
                         x = pose[0] + range * np.cos(angles + pose[2])
                         y = pose[1] + range * np.sin(angles + pose[2])
-                        x, y = x[range < 9], y[range < 9]
+                        x, y = x[range < 5], y[range < 5]
                         map.extend(np.vstack((x, y)).T)
                     map = np.array(map)
                     ax.scatter(map[:, 0], map[:, 1], c='g', s=1)

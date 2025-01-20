@@ -3,6 +3,14 @@ import math
 
 from scipy.optimize import curve_fit
 
+class Reflector:
+    def __init__(self, x_center, y_center):
+        self.x = x_center
+        self.y = y_center
+    
+    def get_position(self):
+        return np.array([self.x, self.y])
+
 class CircularMarker():
         
     def __init__(self) :
@@ -12,31 +20,33 @@ class CircularMarker():
         # reflector_radius = 0.025
         # cluster_dist = reflector_radius + 0.02
         # reflector_min_dist = 1.0
+        self.reflector_list = []
         self.reflector_radius = 0.025
         self.reflector_min_dist = 1.0
         self.cluster_dist = self.reflector_radius + 0.02
         self.reflector_intensity_thres = 150
 
-    def laser_msg_to_pointcloud_np(self, msg):
+    def laser_msg_to_pointcloud_np(self, msg, robot_pose):
         '''Converts laser scan message to pointcloud'''
  
         angle_min = msg.angle_min
         angle_increment = msg.angle_increment
         ranges = msg.ranges
         intensity = msg.intensities
+
  
-        angles = angle_min + np.arange(len(ranges)) * angle_increment
+        angles = angle_min + np.arange(len(ranges)) * angle_increment + robot_pose[2]
         cos_angles = np.cos(angles)
         sin_angles = np.sin(angles)
-        x = ranges * cos_angles
-        y = ranges * sin_angles
+        x = ranges * cos_angles + robot_pose[0]
+        y = ranges * sin_angles + robot_pose[1]
         z = np.zeros_like(ranges)
- 
+        
         points = np.array([x, y, z, intensity]).T
  
         return points
 
-    def cart_to_polar(points_cart):
+    def cart_to_polar(self,points_cart):
         '''Convert cartesian coordinates to polar coordinates'''
         return np.sqrt(points_cart[0]**2 + points_cart[1]**2), np.arctan2(points_cart[1], points_cart[0])
     
@@ -130,6 +140,7 @@ class CircularMarker():
         reflector = [[],[],[]]
         reflector_points_cart = []
         first_point_is_reflector = False    #for 360° scan
+        self.reflector_list = []
 
         raw_reflector_mask = pointcloud2[:,3] >= self.reflector_intensity_thres
 
@@ -181,4 +192,8 @@ class CircularMarker():
         for i,ref in enumerate(checked_points_cart):
             ref_centres[0][i], ref_centres[1][i] = self.find_circle_center_with_radius_gauss(ref)
 
-        return ref_centres, number_points
+        x, y = ref_centres
+        for x,y in zip (x,y):
+            self.reflector_list.append(Reflector(x, y))
+
+        return self.reflector_list

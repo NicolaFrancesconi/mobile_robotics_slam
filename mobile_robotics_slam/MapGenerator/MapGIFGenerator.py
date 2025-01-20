@@ -35,7 +35,7 @@ def _generate_gif():
         print("No frames to create a GIF.")
 
 frames_dir = os.path.join(path, "frames")
-gif_path = os.path.join(path, "gif","MapRealDingoOffice4.gif")  # Path for the final GIF
+gif_path = os.path.join(path, "gif","MapRealDingoAuditoriumprova.gif")  # Path for the final GIF
 duration = 0.1  # Duration of each frame in seconds
 
 # Create frames directory if it doesn't exist

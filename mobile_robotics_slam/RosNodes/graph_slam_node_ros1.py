@@ -88,23 +88,23 @@ class GraphSLamNode:
 
     def setup_extractor_parameters(self):
         # Set the parameters of the Corner Extractor
-        min_corner_angle = 80
-        max_corner_angle = 100
-        max_intersecton_distance = 0.3
+        min_corner_angle = 85
+        max_corner_angle = 95
+        max_intersecton_distance = 0.4
         self.corner_extractor.set_corner_params(max_intersecton_distance, min_corner_angle, max_corner_angle)
 
         # Set the parameters of the Adaptive Segment Detector
         sigma_ranges = 0.20
         lambda_angle = 10
         merge_distance = 0.15
-        min_points_density = 3
-        min_segment_length = 0.15
+        min_points_density = 5
+        min_segment_length = 0.2
         self.corner_extractor.set_detector_params(sigma_ranges, lambda_angle, merge_distance, min_points_density, min_segment_length)
 
         # Set the parameters of the Segment Handler
         epsilon = 0.12
-        min_density_after_segmentation = 7
-        min_length_after_segmentation = 0.3
+        min_density_after_segmentation = 5
+        min_length_after_segmentation = 0.2
         self.corner_extractor.set_handler_params(epsilon, min_density_after_segmentation, min_length_after_segmentation)
 
     def compute_homo_transform(self, pose1, pose2):
@@ -196,8 +196,8 @@ class GraphSLamNode:
             reflectors = []
             corners = []
 
-            #reflectors = self.extract_reflectors(scan, robot_estimated_pose)
-            corners = self.extract_corners(scan, robot_estimated_pose)
+            reflectors = self.extract_reflectors(scan, robot_estimated_pose)
+            #corners = self.extract_corners(scan, robot_estimated_pose)
             landmarks = reflectors + corners
             
             self.OdomLastNodePose = np.copy(odom_pose)

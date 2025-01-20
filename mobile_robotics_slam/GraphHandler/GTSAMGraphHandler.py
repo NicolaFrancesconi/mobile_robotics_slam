@@ -96,7 +96,7 @@ class GraphHandler:
         if unique:
             if len(matched_idxs) > 0:
                     match = True
-        elif len(matched_idxs) > 2:
+        elif len(matched_idxs) > 0:
             match = True
         return match, matched_idxs, non_matched_idxs
     
@@ -107,7 +107,7 @@ class GraphHandler:
         if len(extracted_corners) == 0:
                 return False, [], []
         match = False
-        relative_distance_tolerance = 0.05
+        relative_distance_tolerance = 0.15
         relative_angle_tolerance = 3
         compatibility_graph = construct_corner_compatibility_graph(extracted_corners, mapped_corners, relative_distance_tolerance, relative_angle_tolerance)
         matched_idxs, unique = find_maximum_clique(compatibility_graph)
@@ -115,7 +115,7 @@ class GraphHandler:
         if unique:
             if len(matched_idxs) > 1:
                     match = True
-        elif len(matched_idxs) > 3:
+        elif len(matched_idxs) > 1:
             match = True
         return match, matched_idxs, non_matched_idxs
     
@@ -143,7 +143,7 @@ class GraphHandler:
                 distances = np.linalg.norm(mapped_corners[:, :2] - position, axis=1)
             else:
                 distances = np.array([1000])
-            if np.min(distances) > 0.2:
+            if np.min(distances) > 0.35:
                 self.graph_optimizer.add_pose_landmark_edge_2D(pose_id, id, position)
                 self.landmark_vertices.append(LandmarkVertex(id, landmarks[extracted_corners[idx][3]]))
 
@@ -191,7 +191,7 @@ class GraphHandler:
         self.add_non_matched_corners(extracted_corners, pose_id, landmarks, non_matched_indices_cor, mapped_corners)
         self.add_non_matched_reflectors(extracted_reflectors, pose_id, landmarks, non_matched_indices_ref, mapped_reflectors)
 
-        if  len(self.pose_vertices) % 1 ==0 or len(self.pose_vertices) >= 539 or match_cor or match_ref :
+        if  len(self.pose_vertices) % 15 ==0 or len(self.pose_vertices) >= 539 or match_cor :
             pass
             self.optimize_graph()
         if len(self.pose_vertices) >= 539:
@@ -282,7 +282,7 @@ class GraphHandler:
         plt.show()
 
 
-def construct_corner_compatibility_graph(extracted, mapped, distance_tolerance, angle_tolerance, neighbor_distance=0.9):
+def construct_corner_compatibility_graph(extracted, mapped, distance_tolerance, angle_tolerance, neighbor_distance=1.0):
     """
     Optimized construction of the compatibility graph.
     """
@@ -319,7 +319,7 @@ def construct_corner_compatibility_graph(extracted, mapped, distance_tolerance, 
 
     return G
 
-def construct_reflector_compatibility_graph(extracted, mapped, distance_tolerance, neighbor_distance=2):
+def construct_reflector_compatibility_graph(extracted, mapped, distance_tolerance, neighbor_distance=1.0):
     """
     Optimized construction of the compatibility graph.
     """

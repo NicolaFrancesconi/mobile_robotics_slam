@@ -137,12 +137,7 @@ class GraphSLamNode:
 
     def synchronized_callback(self, odom: Odometry, scan: LaserScan):
 
-        pointcloud2 = self.reflector_extractor.laser_msg_to_pointcloud_np(scan)
-        reflectors = self.reflector_extractor.reflector_centre_gauss(pointcloud2, 3)
-
-        print("Reflectors: ", reflectors)
-
-        return
+        
 
         if (self.OptimizedLastNodePose[0] is None) or (self.OdomLastNodePose[0] is None):
             self.OdomLastNodePose = np.array([odom.pose.pose.position.x, odom.pose.pose.position.y, self.quaternion_to_euler(odom.pose.pose.orientation.x,odom.pose.pose.orientation.y,odom.pose.pose.orientation.z,odom.pose.pose.orientation.w)])
@@ -178,8 +173,8 @@ class GraphSLamNode:
             reflectors = []
             corners = []
 
-            #reflectors = self.extract_reflectors(scan, robot_estimated_pose)
-            corners = self.extract_corners(scan, robot_estimated_pose)
+            reflectors = self.extract_reflectors(scan, robot_estimated_pose)
+            #corners = self.extract_corners(scan, robot_estimated_pose)
 
             
             landmarks = reflectors + corners
@@ -193,8 +188,8 @@ class GraphSLamNode:
 
             print("\n\nTime For Processing: ", time.time() - start_time)
             print(f"Odom Estimate: {self.OdomLastNodePose}")
-            if self.first_pose_added:
-                print(f"ICP Estimated Pose: {self.transform_to_pose(Tr@H_icp)}") 
+            # if self.first_pose_added:
+            #     print(f"ICP Estimated Pose: {self.transform_to_pose(Tr@H_icp)}") 
                  
             print(f"Estimated Pose: {robot_estimated_pose}")
             self.first_pose_added = True
@@ -212,13 +207,10 @@ class GraphSLamNode:
 
 
     def extract_reflectors(self, scan: LaserScan, robot_estimated_pose):
-        pointcloud = np.array(scan.ranges)
-        intensities = np.array(scan.intensities)
-        field_of_view = scan.angle_max - scan.angle_min
-        angle_min = scan.angle_min
-        self.reflector_extractor.extract_reflectors(pointcloud, intensities, field_of_view, angle_min, robot_estimated_pose)
-        keypoints = self.reflector_extractor.get_reflectors()
-        return keypoints
+        pointcloud2 = self.reflector_extractor.laser_msg_to_pointcloud_np(scan, robot_estimated_pose)
+        reflectors= self.reflector_extractor.reflector_centre_gauss(pointcloud2, 3)
+        
+        return reflectors
 
 
     def extract_corners(self, scan: LaserScan, robot_estimated_pose):
