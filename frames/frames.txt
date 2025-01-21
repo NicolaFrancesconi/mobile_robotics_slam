@@ -1,0 +1,1 @@
+Frames are necessary to build the gif, each time the graph slam node is started, the frames are deleted

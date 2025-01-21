@@ -7,6 +7,12 @@ from PIL import Image
 import imageio
 import os
 
+
+path = __file__
+file_location_subfolders = 3  # Number of folders to go up to reach the root of the package
+for _ in range(file_location_subfolders):
+    path = os.path.dirname(path)
+
 def _generate_gif():
     # Create GIF from saved frames
     frames = []
@@ -28,8 +34,8 @@ def _generate_gif():
     else:
         print("No frames to create a GIF.")
 
-frames_dir = "frames"  # Directory to save frames
-gif_path = "dynamic_map_corner2.gif"  # Path for the final GIF
+frames_dir = os.path.join(path, "frames")
+gif_path = os.path.join(path, "gif","mmmmm.gif")  # Path for the final GIF
 duration = 0.1  # Duration of each frame in seconds
 
 # Create frames directory if it doesn't exist
@@ -39,5 +45,3 @@ if not os.path.exists(frames_dir):
 # Create GIF from saved frames
 
 _generate_gif()
-
-
