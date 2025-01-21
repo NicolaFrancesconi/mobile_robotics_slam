@@ -32,7 +32,7 @@ detector.set_min_segment_length(0.30)
 
 
 #Prepare the Laser data
-ranges = np.loadtxt("reference_scan.txt") # Load the ranges from the reference scan
+ranges = np.loadtxt(os.path.join(path, "example_scans", "reference_scan.txt")) # Load the ranges from the reference scan
 field_of_view = 2 * np.pi # Field of view of the laser scan
 angle_min = -np.pi # Minimum angle of the laser scan
 

@@ -293,7 +293,7 @@ class GraphHandler:
         landmarks = np.array(landmarks)
 
         #Save the landmarks positions in a file
-        np.savetxt('landmarks_test2.txt', landmarks)
+        np.savetxt(os.path.join(path, "example_scans",'landmarks_test.txt'), landmarks)
 
         
         plt.title("Optimized Map")
