@@ -17,6 +17,8 @@ for _ in range(file_location_subfolders):
     path = os.path.dirname(path)
 sys.path.insert(0, path)
 
+
+
 from mobile_robotics_slam.Extractors.Reflectors.ReflectorExtractor import ReflectorExtractor
 from mobile_robotics_slam.Extractors.Corners.CornerExtractor import CornerExtractor
 from mobile_robotics_slam.GraphHandler.g2oGraphHandler import GraphHandler as g2oGraphHandler
@@ -36,7 +38,7 @@ class GraphSLamNode(Node):
 ##################################################################
     def __init__(self):
         super().__init__("graph_slam_node", parameter_overrides=[]) 
-    
+
         # Declare variables
         self.OdomLastNodePose = np.array([None, None, None])
         self.OptimizedLastNodePose = np.array([None, None, None])
@@ -289,10 +291,10 @@ class GraphSLamNode(Node):
     
 
     def signal_handler(self, sig, frame):
-        # Generate the map of the environment given the optimized graph
-        self.unoptimized_graph.generate_map()
-        self.graph_handler.generate_map(real_trajectory=self.real_trajectory, odom_trajectory=self.odom_trajectory)
-        self.graph_handler.generate_dynamic_map()
+        # # Generate the map of the environment given the optimized graph
+        # self.unoptimized_graph.generate_map()
+        # self.graph_handler.generate_map(real_trajectory=self.real_trajectory, odom_trajectory=self.odom_trajectory)
+        # self.graph_handler.generate_dynamic_map()
         self.graph_handler.dynamic_map.stop()
     
         self.destroy_node()

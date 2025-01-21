@@ -1,4 +1,5 @@
 from setuptools import find_packages, setup
+from glob import glob
 
 package_name = 'mobile_robotics_slam'
 
@@ -10,6 +11,13 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        ('lib/' + package_name + '/RosNodes', glob('mobile_robotics_slam/RosNodes/*.py')),
+        ('lib/' + package_name + '/Optimizer', glob('mobile_robotics_slam/Optimizer/*.py')),
+        ('lib/' + package_name + '/Extractors/Corners', glob('mobile_robotics_slam//Extractors/Corners/*.py')),
+        ('lib/' + package_name + '/Extractors/Reflectors', glob('mobile_robotics_slam//Extractors/Reflectors/*.py')),
+        ('lib/' + package_name + '/ICP', glob('mobile_robotics_slam/ICP/*.py')),
+        ('lib/' + package_name + '/GraphHandler', glob('mobile_robotics_slam/GraphHandler/*.py')),
+        ('lib/' + package_name + '/MapGenerator', glob('mobile_robotics_slam/MapGenerator/*.py')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -21,7 +29,9 @@ setup(
     entry_points={
         'console_scripts': [
         	'slam_node = mobile_robotics_slam.slam_node:main',
-            'corner_extractor_node = mobile_robotics_slam.corner_extractor_node:main',
+            	'corner_extractor_node = mobile_robotics_slam.corner_extractor_node:main',
+            	'reflector_extractor_node = mobile_robotics_slam.reflector_extractor_node:main',
+            	'graph_slam_node = mobile_robotics_slam.RosNodes.graph_slam_node:main',
         ],
     },
 )
