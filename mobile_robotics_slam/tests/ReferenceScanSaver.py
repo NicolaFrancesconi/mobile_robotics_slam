@@ -10,9 +10,11 @@ from nav_msgs.msg import Odometry
 
 
 # adding localization_lib to the system path
-sys.path.insert(
-    0, os.path.join(os.getcwd(), "src", "application", "mobile_robotics_slam")
-)
+path = __file__
+file_location_subfolders = 3 #Number of folder to go up to reach root of package
+for _ in range(file_location_subfolders):
+    path = os.path.dirname(path)
+sys.path.insert(0, path)
 
 
 class ReferenceScanGenerator(Node):
@@ -22,9 +24,10 @@ class ReferenceScanGenerator(Node):
         
     def scan_callback(self, msg: LaserScan):
         # Save the Scan Ranges into a txt file
-        with open("scan2.txt", "w") as f:
+        with open(os.path.join(path, "example_scans", "scan1.txt"), "w") as f:
             for i in range(len(msg.ranges)):
-                string = str(msg.ranges[i]) + "\n"
+                string = str(msg.ranges[i]) + "\n" # Save only the ranges
+                #string = str(msg.ranges[i]) + " " + str(msg.intensities[i]) + "\n" # Save the ranges and intensities
                 f.write(string)
         print("Reference Scan Saved")
         self.destroy_node()

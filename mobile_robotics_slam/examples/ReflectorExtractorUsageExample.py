@@ -14,7 +14,7 @@ from mobile_robotics_slam.Extractors.Reflectors.ReflectorExtractor import Reflec
 #Test Using Data from intensity_scan.txt
 
 # Load Data
-data = np.loadtxt('intensity_scan.txt')
+data = np.loadtxt(os.path.join(path, "example_scans", "intensity_scan.txt"))
 scan_ranges = data[:, 0]
 scan_intensities = data[:, 1]
 angle_min = -np.pi/2

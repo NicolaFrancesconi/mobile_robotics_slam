@@ -100,6 +100,7 @@ class LineSegmentPolarForm:
         plt.grid()
         plt.xlabel('x')
         plt.ylabel('y')
+        plt.legend()
         plt.show()
 
 
@@ -150,6 +151,7 @@ class SegmentHandler:
             x = np.array([point[0] for point in segment.points])
             y = np.array([point[1] for point in segment.points])
             plt.scatter(x, y, s=1)
+        plt.title("Segments")
         plt.axis('equal')
         plt.grid()
         plt.xlabel('x')

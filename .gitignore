@@ -4,7 +4,7 @@ install
 log
 .vscode
 rosbag2*
-*.txt
+#*.txt Need Txt files for the example Data
 *.g2o
 *.austin
 *.png

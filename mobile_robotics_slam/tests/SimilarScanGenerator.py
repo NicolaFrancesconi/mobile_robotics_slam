@@ -9,10 +9,12 @@ from visualization_msgs.msg import Marker, MarkerArray
 from nav_msgs.msg import Odometry
 
 
-# adding localization_lib to the system path
-sys.path.insert(
-    0, os.path.join(os.getcwd(), "src", "application", "mobile_robotics_slam")
-)
+path = __file__
+file_location_subfolders = 3 #Number of folder to go up to reach root of package
+for _ in range(file_location_subfolders):
+    path = os.path.dirname(path)
+sys.path.insert(0, path)
+
 from mobile_robotics_slam.Keypoint import Keypoint, KeypointList
 
 SCAN_TO_GENERATE = 15
@@ -35,7 +37,7 @@ class ReferenceScanGenerator(Node):
     def __init__(self):
         super().__init__("Scan_Generator", parameter_overrides=[])
         # Read the reference scan from a file
-        with open("reference_scan.txt", "r") as f:
+        with open(os.path.join(path, "example_scans", "reference_scan.txt"), "r") as f:
             self.reference_scan = [float(line.strip()) for line in f]
 
         # Remove Inf values from the reference scan
@@ -85,6 +87,7 @@ class ReferenceScanGenerator(Node):
 
 
     def keypoints_callback(self, msg: MarkerArray, name):
+        pass
 
 
         

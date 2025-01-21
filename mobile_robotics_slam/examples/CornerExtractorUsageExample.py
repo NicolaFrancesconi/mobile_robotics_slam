@@ -39,7 +39,7 @@ corner_extractor.set_handler_params(epsilon, min_density_after_segmentation, min
 
 
 # Prepare the data from the reference scan
-ranges = np.loadtxt("scan1.txt") # Load the ranges from the reference scan
+ranges = np.loadtxt(os.path.join(path, "example_scans", "scan1.txt")) # Load the ranges from the reference scan
 field_of_view = 2 * np.pi # Field of view of the laser scan
 angle_min = -np.pi # Minimum angle of the laser scan
 angles = [angle_min + i * field_of_view / len(ranges) for i in range(len(ranges))]
@@ -51,7 +51,7 @@ end = time.time()
 corner_extractor.plot_corners()
 extracted_corners1 = corner_extractor.get_corners()
 
-ranges = np.loadtxt("scan2.txt") # Load the ranges from the reference scan
+ranges = np.loadtxt(os.path.join(path, "example_scans", "scan2.txt")) # Load the ranges from the reference scan
 
 corner_extractor.extract_corners(ranges, field_of_view, angle_min)
 print("Time taken to extract corners: ", end-start)
@@ -84,15 +84,8 @@ mapped = np.array(mapped)
 #randomly remove some of the extracted corners and relative angles
 # np.random.shuffle(extracted)
 # np.random.shuffle(extracted_angles)
-extracted = extracted[:int(len(extracted)*0.5)]
-extracted_angles = extracted_angles[:int(len(extracted_angles)*0.5)]
-# Add some random point and random angle to extracted
-extracted = np.vstack((extracted, np.array([[0.5, -0.5], [1, 0.5]])))
-extracted_angles = np.hstack((extracted_angles, np.array([0, 0])))
-
-mapped = mapped[:int(len(mapped)*8)]
-mapped_angles = mapped_angles[:int(len(mapped_angles)*8)]
-
+# extracted = extracted[:int(len(extracted)*0.5)]
+# extracted_angles = extracted_angles[:int(len(extracted_angles)*0.5)]
 
 
 

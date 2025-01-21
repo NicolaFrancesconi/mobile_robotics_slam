@@ -1,7 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
-
+path = __file__
+file_location_subfolders = 3 #Number of folder to go up to reach root of package
+for _ in range(file_location_subfolders):
+    path = os.path.dirname(path)
 
 def read_reflectors_from_file(file_path):
     reflectors = []
@@ -16,7 +20,7 @@ def read_reflectors_from_file(file_path):
             reflectors.append(position)
     return reflectors
 
-map_reflectors = read_reflectors_from_file("reflector_map_2.txt")
+map_reflectors = read_reflectors_from_file(os.path.join(path,"example_scans", "SimulationReflectorTrueMap.txt"))
 
 
 def match_landmarks_NN(self, landmarks, landmarks_map,  threshold_match, threshold_new):
@@ -59,41 +63,31 @@ def process_landmarks(file_name, map_reflectors, distance_threshold=0.3, nn_thre
     min_error = np.min(errors)
     return errors, mean_error, max_error, min_error
 
-# List of files to process
-files = [
-    #"landmarks_lag_1.txt",
-    # "landmarks_lag_2.txt",
-    # "landmarks_lag_5.txt",
-    # "landmarks_lag_10.txt",
-    "landmarks_test.txt"
+file_name = os.path.join(path, "example_scans", "landmarks_test.txt")
 
-]
+# Process the file
+errors, mean_error, max_error, min_error = process_landmarks(file_name, map_reflectors)
+delta_error = max_error - min_error
 
-# Prepare the figure for subplots
-fig, axes = plt.subplots(2, 2, figsize=(10, 8))  # 2x2 grid for 4 files
-axes = axes.flatten()  # Flatten to iterate over the axes array
+# Prepare the figure
+plt.figure(figsize=(8, 6))
 
-# Process each file and plot on a subplot
-for i, file_name in enumerate(files):
-    errors, mean_error, max_error, min_error = process_landmarks(file_name, map_reflectors)
-    delta_error = max_error - min_error
-    
-    # Plot on the corresponding subplot
-    ax = axes[i]
-    ax.scatter(np.arange(len(errors)), errors, c='r')
-    ax.axhline(y=mean_error, color='b', linestyle='--', label=f'Mean Error = {mean_error:.5f}')
-    ax.vlines(x=-0.5, ymin= min_error, ymax=max_error, color='r', linestyle='-', label=f'Delta Error = {delta_error:.5f}')
-    ax.axhline(y=max_error, color='g', linestyle='--', label=f'Max Error = {max_error:.5f}')
-    ax.axhline(y=min_error, color='y', linestyle='--', label=f'Min Error = {min_error:.5f}')
+# Plot the error data
+plt.scatter(np.arange(len(errors)), errors, c='r', label='Errors')
+plt.axhline(y=mean_error, color='b', linestyle='--', label=f'Mean Error = {mean_error:.5f}')
+plt.axhline(y=max_error, color='g', linestyle='--', label=f'Max Error = {max_error:.5f}')
+plt.axhline(y=min_error, color='y', linestyle='--', label=f'Min Error = {min_error:.5f}')
+#plt.vlines(x=-0.5, ymin=min_error, ymax=max_error, color='r', linestyle='-', label=f'Delta Error = {delta_error:.5f}')
 
-    ax.set_ylim(0, max_error + 0.1)
-    ax.grid()
-    ax.legend()
-    ax.set_title(f"Error Plot for {file_name}")
-    ax.set_xlabel("Index")
-    ax.set_ylabel("Error")
+# Set axis limits and labels
+plt.ylim(0, max_error+ 0.005)
+plt.grid()
+plt.legend()
+plt.title(f"DISTANCE ERROR OF MAPPED POSITIONS vs REAL POSITION")
+plt.xlabel("Reflector Index")
+plt.ylabel("Error")
 
-# Adjust layout and show the figure
-plt.tight_layout()
+# Show the figure
+#plt.tight_layout()
 plt.show()
 
