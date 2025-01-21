@@ -20,9 +20,7 @@ class DynamicMapUpdater:
 
         
         self.frames_dir = os.path.join(path, "frames")
-        print(path)
-        self.gif_path = "dynamic_map_no_icp.gif"  # Path for the final GIF
-
+        
         # Create frames directory if it doesn't exist
         if not os.path.exists(self.frames_dir):
             os.makedirs(self.frames_dir)
@@ -108,19 +106,3 @@ class DynamicMapUpdater:
                 print(e)
                 # Handle queue timeout or other exceptions
                 continue
-
-        plt.ioff()
-        plt.show()
-
-    def _generate_gif(self):
-        # Create GIF from saved frames
-        frames = []
-        frame_files = sorted([os.path.join(self.frames_dir, f) for f in os.listdir(self.frames_dir) if f.endswith(".png")])
-        for frame_file in frame_files:
-            frames.append(imageio.v3.imread(frame_file))
-
-        if frames:
-            imageio.mimsave(self.gif_path, frames, duration=self.update_interval)
-            print(f"GIF saved to {self.gif_path}")
-        else:
-            print("No frames to create a GIF.")
