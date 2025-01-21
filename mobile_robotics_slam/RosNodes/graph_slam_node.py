@@ -152,10 +152,8 @@ class GraphSLamNode(Node):
                 times = time.time()
                 H_icp = icp(current_points, previous_points, init_transform=Ho, downsample=8, max_iterations=30, max_range=15)
                 print("Time For ICP", time.time() - times)
-                #print("Inverse\n", np.linalg.inv(H_icp))
                 
                 robot_estimated_pose = self.transform_to_pose(Tr@H_icp)
-                #robot_estimated_pose = self.transform_to_pose(Tr@Ho)
                 
             
             self.first_pose_added = True
@@ -211,52 +209,7 @@ class GraphSLamNode(Node):
         self.corner_extractor.extract_corners(pointcloud, field_of_view, angle_min, robot_estimated_pose)
         keypoints = self.corner_extractor.get_corners()
         return keypoints
-
-    def compute_travel_distance_and_rotation(self, displacement):
-        dx, dy, dphi = displacement
-        travel_distance = np.linalg.norm([dx, dy])
-        rotation = np.abs(dphi)
-        return travel_distance, rotation
-
-    def compute_robot_estimate(self, displacement, previous_pose):
-        prev_x, prev_y, prev_phi = previous_pose
-        dx, dy, dphi = displacement
-        robot_pose_x = prev_x + (dx * np.cos(prev_phi) - dy * np.sin(prev_phi))
-        robot_pose_y = prev_y + (dy * np.cos(prev_phi) + dx * np.sin(prev_phi))
-        robot_pose_phi = prev_phi + dphi
-        return np.array([robot_pose_x, robot_pose_y, robot_pose_phi])
-    
-    def compute_odometry_displacement(self, x, y, phi):
-        dx = x - self.OdomLastNodePose[0]
-        dy = y - self.OdomLastNodePose[1]
-        dphi = (phi - self.OdomLastNodePose[2] + np.pi) % (2 * np.pi) - np.pi
-        cos = np.cos(self.OdomLastNodePose[2])
-        sin = np.sin(self.OdomLastNodePose[2])
-        dx_local = cos * dx + sin * dy
-        dy_local = -sin * dx + cos * dy
-        return np.array([dx_local, dy_local, dphi])
         
-        
-    def lidar_frame_to_pose_frame(self, x, y, pose):
-            """Transforms the lidar frame to the real pose frame"""
-            robot_x = pose[0]
-            robot_y = pose[1]
-            robot_phi = pose[2]
-            x_real = robot_x + x * np.cos(robot_phi) - y * np.sin(robot_phi)
-            y_real = robot_y + x * np.sin(robot_phi) + y * np.cos(robot_phi)
-            return [x_real, y_real]
-
-    def real_pose_frame_to_lidar_frame(self, x, y):
-        """Transforms the real pose frame to the lidar frame"""
-        x_lidar = (x - self.robot_pose_x) * np.cos(self.robot_pose_phi) + (y - self.robot_pose_y) * np.sin(self.robot_pose_phi) # type: ignore
-        y_lidar = -(x - self.robot_pose_x) * np.sin(self.robot_pose_phi) + (y - self.robot_pose_y) * np.cos(self.robot_pose_phi) # type: ignore
-        return [x_lidar, y_lidar]
-
-    def set_robot_real_pose(self, pose_x, pose_y, phi):
-        """Set the real robot pose"""
-        self.robot_pose_x = pose_x
-        self.robot_pose_y = pose_y
-        self.robot_pose_phi = phi
 
     def quaternion_to_euler(self, x, y, z, w):
         """Converts quaternion to euler angles"""
@@ -314,9 +267,6 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     finally:
-        # Destroy the node explicitly
-        # (optional - otherwise it will be done automatically
-        # when the garbage collector destroys the node object)
         slam_node.destroy_node()
         rclpy.try_shutdown()
 
