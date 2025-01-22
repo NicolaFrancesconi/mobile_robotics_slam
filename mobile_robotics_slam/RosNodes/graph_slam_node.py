@@ -122,6 +122,7 @@ class GraphSLamNode(Node):
         return T
     
     def transform_to_pose(self, T):
+        """Given a Homogeneous Transform T it returns the pose [x,y,theta]"""
         theta = np.arctan2(T[1,0], T[0,0])
         x = T[0, 2]
         y = T[1, 2]
