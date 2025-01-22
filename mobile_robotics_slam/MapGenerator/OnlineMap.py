@@ -45,7 +45,7 @@ class DynamicMapUpdater:
             try:
                 self.data_queue.get_nowait()  # Remove the oldest data
             except Empty:
-                break  # If queue is empty, exit the loop
+                continue  # If queue is empty, exit the loop
 
             except KeyboardInterrupt:
                 print("Shutting down dynamic map updater.")
@@ -56,7 +56,7 @@ class DynamicMapUpdater:
         
 
     def _update_map(self, data_queue):
-        #plt.ion()  # Enable interactive mode
+        plt.ion()  # Enable interactive mode
         fig, ax = plt.subplots()
         
         
@@ -83,7 +83,7 @@ class DynamicMapUpdater:
                         angles = np.linspace(-np.pi, np.pi, len(range))
                         x = pose[0] + range * np.cos(angles + pose[2])
                         y = pose[1] + range * np.sin(angles + pose[2])
-                        x, y = x[range < 5], y[range < 5]
+                        x, y = x[range < 8], y[range < 8]
                         map.extend(np.vstack((x, y)).T)
                     map = np.array(map)
                     ax.scatter(map[:, 0], map[:, 1], c='g', s=1)
@@ -111,4 +111,4 @@ class DynamicMapUpdater:
                 print("Shutting down dynamic map updater.")
                 sys.exit(0)
             finally:
-                plt.close(fig)
+                pass
