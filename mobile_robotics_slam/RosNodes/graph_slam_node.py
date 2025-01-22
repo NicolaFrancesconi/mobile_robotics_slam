@@ -241,18 +241,11 @@ class GraphSLamNode(Node):
         range = np.sqrt(x**2 + y**2)
         angle = np.arctan2(y, x)
         return np.array([range, angle])
-    
 
-    def signal_handler(self, sig, frame):
-        # # Generate the map of the environment given the optimized graph
-        # self.unoptimized_graph.generate_map()
-        # self.graph_handler.generate_map(real_trajectory=self.real_trajectory, odom_trajectory=self.odom_trajectory)
-        # self.graph_handler.generate_dynamic_map()
-        self.graph_handler.dynamic_map.stop()
+def save_data(node : GraphSLamNode):
+    # Save the optimized poses
+    pass #TODO: Implement this function to store data
     
-        self.destroy_node()
-        rclpy.try_shutdown()
-
         
 def main(args=None):
     rclpy.init(args=args)
@@ -260,13 +253,13 @@ def main(args=None):
     print("SLAM node started")
 
     slam_node = GraphSLamNode()
-    signal.signal(signal.SIGINT, slam_node.signal_handler)
 
     try:
         rclpy.spin(slam_node)
     except KeyboardInterrupt:
-        pass
+        pass  # Graceful handling of Ctrl+C
     finally:
+        save_data(slam_node)
         slam_node.destroy_node()
         rclpy.try_shutdown()
 

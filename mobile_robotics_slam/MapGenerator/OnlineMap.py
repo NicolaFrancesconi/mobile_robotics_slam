@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from queue import Empty
 import os
+import sys
 
 class DynamicMapUpdater:
     def __init__(self):
@@ -32,10 +33,11 @@ class DynamicMapUpdater:
         self.process.start()
 
     def stop(self):
-        if self.process.is_alive():
-            self.process.terminate()
-            self.process.join()
-            plt.close()
+        self.data_queue.close()  # Close the queue
+        self.data_queue.join_thread()  # Join the thread associated with the queue
+        self.process.terminate()  # Terminate the process
+        self.process.join()  # Ensure the process is cleaned up
+        plt.close()
 
 
     def add_data(self, poses, landmarks, points):
@@ -44,6 +46,10 @@ class DynamicMapUpdater:
                 self.data_queue.get_nowait()  # Remove the oldest data
             except Empty:
                 break  # If queue is empty, exit the loop
+
+            except KeyboardInterrupt:
+                print("Shutting down dynamic map updater.")
+                sys.exit(0)
 
         # Add new data
         self.data_queue.put((poses, landmarks, points))
@@ -99,10 +105,10 @@ class DynamicMapUpdater:
                 plt.pause(0.2)
 
             except Empty:
-                # Handle queue timeout
-                continue
+                pass
 
-            except Exception as e:
-                print(e)
-                # Handle queue timeout or other exceptions
-                continue
+            except KeyboardInterrupt:
+                print("Shutting down dynamic map updater.")
+                sys.exit(0)
+            finally:
+                plt.close(fig)
