@@ -2,9 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import sys
-import time
 from sklearn.cluster import DBSCAN
-import copy
 from scipy.optimize import least_squares
 
 class Reflector:

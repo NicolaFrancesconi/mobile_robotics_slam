@@ -28,9 +28,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-        	'slam_node = mobile_robotics_slam.slam_node:main',
-            	'corner_extractor_node = mobile_robotics_slam.corner_extractor_node:main',
-            	'reflector_extractor_node = mobile_robotics_slam.reflector_extractor_node:main',
+        	'slam_node = mobile_robotics_slam.RosNodes.slam_node:main',
+            	'corner_extractor_node = mobile_robotics_slam.RosNodes.corner_extractor_node:main',
+            	'reflector_extractor_node = mobile_robotics_slam.RosNodes.reflector_extractor_node:main',
             	'graph_slam_node = mobile_robotics_slam.RosNodes.graph_slam_node:main',
         ],
     },

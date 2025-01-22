@@ -2,7 +2,6 @@ import multiprocessing
 import numpy as np
 import matplotlib.pyplot as plt
 from queue import Empty
-import imageio
 import os
 
 class DynamicMapUpdater:

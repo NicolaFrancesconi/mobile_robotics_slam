@@ -7,6 +7,19 @@
   <maintainer email="nicola.francesconi@sacmigroup.com">lanzo</maintainer>
   <license>TODO: License declaration</license>
 
+  <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>message_filters</depend>
+  <depend>networkx</depend>
+  <depend>numpy</depend>
+  <depend>matplotlib</depend>
+  <depend>scipy</depend>
+  <depend>sklearn</depend>
+  <depend>itertools</depend>
+  <depend>multiprocessing</depend>
+  <depend>gtsam</depend>
+  <depend>g2o</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
