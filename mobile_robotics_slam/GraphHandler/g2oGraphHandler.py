@@ -207,12 +207,8 @@ class GraphHandler:
         self.add_non_matched_corners(extracted_corners, pose_id, landmarks, non_matched_indices_cor, mapped_corners)
         self.add_non_matched_reflectors(extracted_reflectors, pose_id, landmarks, non_matched_indices_ref, mapped_reflectors)
 
-        if  len(self.pose_vertices) % 40 ==0 or len(self.pose_vertices) >= 539 or match_cor:
-            pass
+        if match_cor or match_ref:
             self.optimize_graph()
-        if len(self.pose_vertices) >= 539:
-            self.generate_map()
-            
         
         last_pose = self.graph_optimizer.get_pose_2D(pose_id)
         last_pose = np.array([last_pose[0], last_pose[1], last_pose[2]])
@@ -250,6 +246,17 @@ class GraphHandler:
             optimized_landmark = self.graph_optimizer.get_landmark_2D(landmark.id)
             landmark.object.x = optimized_landmark[0]
             landmark.object.y = optimized_landmark[1]
+
+    def get_optimized_poses_and_landmarks(self):
+        poses = []
+        point_clouds = []
+        landmarks = []
+        for pose in self.pose_vertices:
+            poses.append(np.array([pose.x, pose.y, pose.theta]))
+            point_clouds.append(pose.point_cloud)
+        for landmark in self.landmark_vertices:
+            landmarks.append(landmark.object.get_position())
+        return poses, point_clouds, landmarks
 
     
     def generate_map(self, real_trajectory=None, odom_trajectory=None):
