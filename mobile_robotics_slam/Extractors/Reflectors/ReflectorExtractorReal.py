@@ -22,7 +22,7 @@ class CircularMarker():
         # reflector_min_dist = 1.0
         self.reflector_list = []
         self.reflector_radius = 0.025
-        self.reflector_min_dist = 1.0
+        self.reflector_min_dist = 0
         self.cluster_dist = self.reflector_radius + 0.02
         self.reflector_intensity_thres = 150
 

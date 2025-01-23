@@ -145,7 +145,7 @@ class GraphHandler:
                 distances = np.linalg.norm(mapped_reflectors[:, :2] - position, axis=1)
             else:
                 distances = np.array([1000])
-            if np.min(distances) > 2:
+            if np.min(distances) > 0.4:
                 self.graph_optimizer.add_pose_landmark_edge_2D(pose_id, id, position)
                 self.landmark_vertices.append(LandmarkVertex(id, landmarks[extracted_reflectors[idx][2]]))
 
@@ -159,6 +159,7 @@ class GraphHandler:
             for id,landmark in enumerate(landmarks):
                 self.graph_optimizer.add_pose_landmark_edge_2D(pose_id, id, landmark.get_position())
                 self.landmark_vertices.append(LandmarkVertex(id, landmark))
+                print(f"{id} Landmark Position {landmark.get_position()}")
             return pose
         
         robot_pose = np.array([pose[0], pose[1], pose[2]])

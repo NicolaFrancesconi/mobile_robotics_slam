@@ -50,7 +50,7 @@ class GTSAMGraphOptimizer:
         self.initial_estimate.insert(id, Pose2(pose[0], pose[1], pose[2]))
         self.actual_estimate.insert(id, Pose2(pose[0], pose[1], pose[2]))
         self.poses_key.append(id)
-        print(f"Added prior pose vertex with id {id} and pose {pose}")
+        #print(f"Added prior pose vertex with id {id} and pose {pose}")
         return id
 
     def add_prior_landmark_2D(self, id:int, position):
@@ -66,7 +66,7 @@ class GTSAMGraphOptimizer:
         # Add the initial estimate for the landmark
         self.initial_estimate.insert(id, point)
         self.actual_estimate.insert(id, point)
-        print(f"Added prior landmark vertex with id {id} and position {position}")
+        #print(f"Added prior landmark vertex with id {id} and position {position}")
 
     def add_odometry_edge_2D(self, id1, id2, robot_pose):
         """
@@ -89,7 +89,7 @@ class GTSAMGraphOptimizer:
         self.graph.add(gtsam.BetweenFactorPose2(poseId1,poseId2, Pose2(relative_transform), self.ODOMETRY_NOISE))
         self.initial_estimate.insert(poseId2, pose)
         self.actual_estimate.insert(poseId2, pose)
-        print(f"Added odometry edge between {poseId1} and {poseId2}")
+        #print(f"Added odometry edge between {poseId1} and {poseId2}")
 
 
     def add_pose_landmark_edge_2D(self, pose_id, landmark_id, landmark_position):
@@ -107,9 +107,9 @@ class GTSAMGraphOptimizer:
             self.initial_estimate.insert(landmark_id, point_pose)
             self.actual_estimate.insert(landmark_id, point_pose)
             self.landmarks_key.append(landmark_id)
-            print(f"Added landmark vertex with id {landmark_id} and position {landmark_position}")
+            #print(f"Added landmark vertex with id {landmark_id} and position {landmark_position}")
         
-        print(f"Added pose-landmark edge between {pose_id} and {landmark_id}")
+        #print(f"Added pose-landmark edge between {pose_id} and {landmark_id}")
 
     
         
