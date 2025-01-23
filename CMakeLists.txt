@@ -23,6 +23,24 @@ catkin_package(
 #  CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
+catkin_install_python(
+  PROGRAMS
+    mobile_robotics_slam/RosNodes/corner_extractor_node_ros1.py
+    mobile_robotics_slam/RosNodes/graph_slam_node_Real_Reflector.py
+    mobile_robotics_slam/RosNodes/graph_slam_node_ros1.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(
+  DIRECTORY mobile_robotics_slam/
+  DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}/mobile_robotics_slam
+  FILES_MATCHING PATTERN "*.py"
+)
+# Install the package.xml file
+install(
+  FILES package.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 include_directories(
 # include
