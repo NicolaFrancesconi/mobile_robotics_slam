@@ -38,6 +38,7 @@ class LandmarkVertex:
 
 class GraphHandler:
     def __init__(self):
+        print("g2o Graph Handler Initialized")
         self.graph_optimizer = GraphOptimizer()
         self.fixed_lag = 0
         self.pose_vertices = []

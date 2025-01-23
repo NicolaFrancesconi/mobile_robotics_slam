@@ -55,8 +55,8 @@ class GraphSlamNode(Node):
         self.corner_extractor = CornerExtractor()
         self.setup_extractor_parameters()
 
-        #self.graph_handler = GTSAMGraphHandler()
-        self.graph_handler = g2oGraphHandler()
+        self.graph_handler = GTSAMGraphHandler()
+        #self.graph_handler = g2oGraphHandler()
 
         self.real_trajectory = []
         self.odom_trajectory = []
