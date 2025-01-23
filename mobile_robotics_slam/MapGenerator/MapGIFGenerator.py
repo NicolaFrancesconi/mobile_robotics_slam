@@ -13,7 +13,9 @@ file_location_subfolders = 3  # Number of folders to go up to reach the root of 
 for _ in range(file_location_subfolders):
     path = os.path.dirname(path)
 
-def _generate_gif():
+gif_name = "map.gif"
+
+def _generate_gif(gif_dir, gif_name):
     # Create GIF from saved frames
     frames = []
     frame_files = sorted([os.path.join(frames_dir, f) for f in os.listdir(frames_dir) if f.endswith(".png")])
@@ -28,6 +30,7 @@ def _generate_gif():
             img = img.resize(target_size, Image.Resampling.LANCZOS)  # Resize to match target size
         frames.append(np.array(img))  # Convert to NumPy array for `imageio`
 
+    gif_path = os.path.join(gif_dir, gif_name)
     if frames:
         imageio.mimsave(gif_path, frames, duration=duration)
         print(f"GIF saved to {gif_path}")
@@ -35,15 +38,17 @@ def _generate_gif():
         print("No frames to create a GIF.")
 
 frames_dir = os.path.join(path, "frames")
-gif_path = os.path.join(path, "gif","MapRealDingoAuditoriumprova.gif")  # Path for the final GIF
+gif_dir_path = os.path.join(path, "gif")  # Path for the final GIF
 duration = 0.1  # Duration of each frame in seconds
+
+# Create gif directory if it doesn't exist
+if not os.path.exists(os.path.dirname(gif_dir_path)):
+    os.makedirs(os.path.dirname(gif_dir_path))
 
 # Create frames directory if it doesn't exist
 if not os.path.exists(frames_dir):
-    os.makedirs(frames_dir)
+    raise ValueError(f"Frames directory not found at {frames_dir}")
 
 # Create GIF from saved frames
 
-_generate_gif()
-
-
+_generate_gif(gif_dir_path,gif_name)

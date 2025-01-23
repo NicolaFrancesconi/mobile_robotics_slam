@@ -2,8 +2,8 @@ import multiprocessing
 import numpy as np
 import matplotlib.pyplot as plt
 from queue import Empty
-import imageio
 import os
+import sys
 
 class DynamicMapUpdater:
     def __init__(self):
@@ -26,16 +26,18 @@ class DynamicMapUpdater:
             os.makedirs(self.frames_dir)
         else: # Clear existing frames
             for f in os.listdir(self.frames_dir):
-                os.remove(os.path.join(self.frames_dir, f))
+                if f.endswith(".png"):
+                    os.remove(os.path.join(self.frames_dir, f))
 
     def start(self):
         self.process.start()
 
     def stop(self):
-        if self.process.is_alive():
-            self.process.terminate()
-            self.process.join()
-            plt.close()
+        self.data_queue.close()  # Close the queue
+        self.data_queue.join_thread()  # Join the thread associated with the queue
+        self.process.terminate()  # Terminate the process
+        self.process.join()  # Ensure the process is cleaned up
+        plt.close()
 
 
     def add_data(self, poses, landmarks, points):
@@ -43,7 +45,11 @@ class DynamicMapUpdater:
             try:
                 self.data_queue.get_nowait()  # Remove the oldest data
             except Empty:
-                break  # If queue is empty, exit the loop
+                continue  # If queue is empty, exit the loop
+
+            except KeyboardInterrupt:
+                print("Shutting down dynamic map updater.")
+                sys.exit(0)
 
         # Add new data
         self.data_queue.put((poses, landmarks, points))
@@ -58,36 +64,28 @@ class DynamicMapUpdater:
         while True:
             try:
                 # Retrieve latest data
-                poses, landmarks, ranges = data_queue.get(timeout=self.update_interval)
+                poses, landmarks, points = data_queue.get(timeout=self.update_interval)
                 
                 ax.clear()
                 print("Updating Map")
 
                 poses = np.array(poses)
                 landmarks = np.array(landmarks)
-                ranges = np.array(ranges)
+                points = np.array(points)
+
 
                 
                 # Plot poses
                 map = []
                 if poses is not None and len(poses) > 0:
-                    poses = np.array(poses)
                     ax.plot(poses[:, 0], poses[:, 1], "orange", label='Optimized Trajectory')
-                    for pose, range in zip(poses, ranges):
-                        angles = np.linspace(-np.pi, np.pi, len(range))
-                        x = pose[0] + range * np.cos(angles + pose[2])
-                        y = pose[1] + range * np.sin(angles + pose[2])
-                        x, y = x[range < 5], y[range < 5]
-                        map.extend(np.vstack((x, y)).T)
-                    map = np.array(map)
-                    ax.scatter(map[:, 0], map[:, 1], c='g', s=1)
-                        
-
+                    x, y = points[:, 0], points[:, 1]
+                    ax.scatter(x, y, c='g', s=1)
 
                 # Plot landmarks
                 if landmarks is not None and len(landmarks) > 0:
                     landmarks = np.array(landmarks)
-                    ax.scatter(landmarks[:, 0], landmarks[:, 1], c="r", label="Corners", s=4)
+                    ax.scatter(landmarks[:, 0], landmarks[:, 1], c="r", label="Landmarks", s=5)
 
                 ax.set_title("Dynamic Map")
                 ax.set_aspect('equal')
@@ -96,13 +94,14 @@ class DynamicMapUpdater:
                 frame_path = os.path.join(self.frames_dir, f"frame_{frame_count:04d}.png")
                 plt.savefig(frame_path)
                 frame_count += 1
-                plt.pause(0.2)
+                plt.pause(0.5)
+                
 
             except Empty:
-                # Handle queue timeout
-                continue
+                pass
 
-            except Exception as e:
-                print(e)
-                # Handle queue timeout or other exceptions
-                continue
+            except KeyboardInterrupt:
+                print("Shutting down dynamic map updater.")
+                sys.exit(0)
+            finally:
+                pass

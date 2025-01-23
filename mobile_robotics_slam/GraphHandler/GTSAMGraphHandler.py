@@ -14,8 +14,6 @@ for _ in range(file_location_subfolders):
 sys.path.insert(0, path)
 
 from mobile_robotics_slam.Optimizer.GTSAMGraphOptimizer import GTSAMGraphOptimizer
-from mobile_robotics_slam.MapGenerator.OnlineMap import DynamicMapUpdater
-
 
 class PoseVertex:
     def __init__(self, id, x, y, theta, point_cloud):
@@ -43,16 +41,6 @@ class GraphHandler:
         self.pose_vertices = []
         self.landmark_vertices = []
         self.pose_base_id = 1000
-        self.dynamic_map = DynamicMapUpdater()
-        self.dynamic_map.start()
-
-
-    def generate_dynamic_map(self):
-        """Send the latest pose and landmark data to the dynamic map."""
-        poses = [[pose.x, pose.y, pose.theta] for pose in self.pose_vertices]
-        points = [pose.point_cloud for pose in self.pose_vertices]
-        landmarks = [landmark.object.get_position() for landmark in self.landmark_vertices]
-        self.dynamic_map.add_data(poses, landmarks, points)
 
     def get_mapped_landmarks(self):
         mapped_reflectors = []
@@ -107,7 +95,7 @@ class GraphHandler:
         if len(extracted_corners) == 0:
                 return False, [], []
         match = False
-        relative_distance_tolerance = 0.15
+        relative_distance_tolerance = 0.1
         relative_angle_tolerance = 3
         compatibility_graph = construct_corner_compatibility_graph(extracted_corners, mapped_corners, relative_distance_tolerance, relative_angle_tolerance)
         matched_idxs, unique = find_maximum_clique(compatibility_graph)
@@ -143,7 +131,7 @@ class GraphHandler:
                 distances = np.linalg.norm(mapped_corners[:, :2] - position, axis=1)
             else:
                 distances = np.array([1000])
-            if np.min(distances) > 0.35:
+            if np.min(distances) > 0.4:
                 self.graph_optimizer.add_pose_landmark_edge_2D(pose_id, id, position)
                 self.landmark_vertices.append(LandmarkVertex(id, landmarks[extracted_corners[idx][3]]))
 
@@ -191,17 +179,11 @@ class GraphHandler:
         self.add_non_matched_corners(extracted_corners, pose_id, landmarks, non_matched_indices_cor, mapped_corners)
         self.add_non_matched_reflectors(extracted_reflectors, pose_id, landmarks, non_matched_indices_ref, mapped_reflectors)
 
-        if  len(self.pose_vertices) % 15 ==0 or len(self.pose_vertices) >= 539 or match_cor :
-            pass
+        if  match_cor or match_ref :
             self.optimize_graph()
-        if len(self.pose_vertices) >= 539:
-            self.generate_map()
             
-        
         last_pose = self.graph_optimizer.get_pose_2D(pose_id)
         last_pose = np.array([last_pose[0], last_pose[1], last_pose[2]])
-
-        self.generate_dynamic_map()
 
         return last_pose
                
@@ -227,62 +209,20 @@ class GraphHandler:
             landmark.object.x = optimized_landmark[0]
             landmark.object.y = optimized_landmark[1]
 
-    
-    def generate_map(self, real_trajectory=None, odom_trajectory=None):
-        """Generate the map from the optimized vertices"""
-        map = []
-        self.optimize_graph()
+    def get_optimized_poses_and_landmarks(self):
         poses = []
+        point_clouds = []
         landmarks = []
         for pose in self.pose_vertices:
-            ranges = pose.point_cloud
-            angles = np.linspace(-np.pi, np.pi, len(ranges))
-            angles = angles[ranges < 15]
-            ranges = ranges[ranges < 15]
-            x = pose.x + ranges * np.cos(angles + pose.theta)
-            y = pose.y + ranges * np.sin(angles + pose.theta)
-            map.extend(np.vstack((x, y)).T)
-            poses.append([pose.x, pose.y, pose.theta])
-        
+            poses.append(np.array([pose.x, pose.y, pose.theta]))
+            point_clouds.append(pose.point_cloud)
         for landmark in self.landmark_vertices:
             landmarks.append(landmark.object.get_position())
+        return poses, point_clouds, landmarks
 
-        plt.figure()
-        if real_trajectory is not None:
-            ground_truth = []
-            for pose in real_trajectory:
-                ground_truth.append([pose[0], pose[1]])
-            ground_truth = np.array(ground_truth)
-            plt.plot(ground_truth[:, 0], ground_truth[:, 1], 'r--', label='Ground Truth')
-
-        if odom_trajectory is not None:
-            odometry = []
-            for pose in odom_trajectory:
-                odometry.append([pose[0], pose[1]])
-            odometry = np.array(odometry)
-            plt.plot(odometry[:, 0], odometry[:, 1], 'b--', label='Odometry')
-
-                
-        
-        map = np.array(map)
-        poses = np.array(poses)
-        landmarks = np.array(landmarks)
-
-        #Save the landmarks positions in a file
-        np.savetxt(os.path.join(path, "example_scans",'landmarks_test.txt'), landmarks)
-
-        
-        plt.title("Optimized Map")
-        plt.scatter(map[:, 0], map[:, 1], c='g', s=1)
-        plt.plot(poses[:, 0], poses[:, 1], "orange", label='Optimized Trajectory')
-        if len(landmarks) > 0:
-            plt.scatter(landmarks[:, 0], landmarks[:, 1], c="r")
-        plt.axis('equal')
-        plt.legend(loc='upper left')
-        plt.show()
-
-
-def construct_corner_compatibility_graph(extracted, mapped, distance_tolerance, angle_tolerance, neighbor_distance=1.0):
+    
+    
+def construct_corner_compatibility_graph(extracted, mapped, distance_tolerance, angle_tolerance, neighbor_distance=2):
     """
     Optimized construction of the compatibility graph.
     """
@@ -319,7 +259,7 @@ def construct_corner_compatibility_graph(extracted, mapped, distance_tolerance, 
 
     return G
 
-def construct_reflector_compatibility_graph(extracted, mapped, distance_tolerance, neighbor_distance=1.0):
+def construct_reflector_compatibility_graph(extracted, mapped, distance_tolerance, neighbor_distance=1):
     """
     Optimized construction of the compatibility graph.
     """
