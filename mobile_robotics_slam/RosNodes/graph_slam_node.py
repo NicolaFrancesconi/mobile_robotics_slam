@@ -31,6 +31,8 @@ from mobile_robotics_slam.MapGenerator.OnlineMap import DynamicMapUpdater
 
 DISTANCE_THRESHOLD = 0.4
 ROTATION_THRESHOLD = np.deg2rad(5)
+EXTRACT_CORNER = False
+EXTRACT_REFLECTORS = True
 
 
 
@@ -167,8 +169,10 @@ class GraphSlamNode(Node):
         self.real_trajectory.append(np.array([real.pose.pose.position.x, real.pose.pose.position.y, self.quaternion_to_euler(real.pose.pose.orientation.x,real.pose.pose.orientation.y,real.pose.pose.orientation.z,real.pose.pose.orientation.w)]))
         reflectors = []
         corners = []
-        reflectors = self.extract_reflectors(scan, laser_estimated_pose)
-        #corners = self.extract_corners(scan, laser_estimated_pose)
+        if EXTRACT_CORNER:
+            corners = self.extract_corners(scan, laser_estimated_pose)
+        if EXTRACT_REFLECTORS:
+            reflectors = self.extract_reflectors(scan, laser_estimated_pose)
         landmarks = reflectors + corners
         laser_optimized_pose = self.graph_handler.add_to_graph(laser_estimated_pose, np.array(scan.ranges), landmarks)
         T_laser_optimized = self.pose_to_transform(laser_optimized_pose)
@@ -217,8 +221,10 @@ class GraphSlamNode(Node):
             #Extract Landmarks from the scan wrt Laser Frame
             reflectors = []
             corners = []
-            reflectors = self.extract_reflectors(scan, laser_estimated_pose)
-            #corners = self.extract_corners(scan, laser_estimated_pose)
+            if EXTRACT_CORNER:
+                corners = self.extract_corners(scan, laser_estimated_pose)
+            if EXTRACT_REFLECTORS:
+                reflectors = self.extract_reflectors(scan, laser_estimated_pose)
             landmarks = reflectors + corners
             
             #Add the estimated of laser pose to the graph and get the optimized pose of laser
