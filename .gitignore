@@ -8,3 +8,4 @@ rosbag2*
 *.g2o
 *.austin
 *.png
+/trajectory_data/*.txt

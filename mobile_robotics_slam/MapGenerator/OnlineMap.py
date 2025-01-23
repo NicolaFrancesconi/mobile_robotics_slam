@@ -64,36 +64,28 @@ class DynamicMapUpdater:
         while True:
             try:
                 # Retrieve latest data
-                poses, landmarks, ranges = data_queue.get(timeout=self.update_interval)
+                poses, landmarks, points = data_queue.get(timeout=self.update_interval)
                 
                 ax.clear()
                 print("Updating Map")
 
                 poses = np.array(poses)
                 landmarks = np.array(landmarks)
-                ranges = np.array(ranges)
+                points = np.array(points)
+
 
                 
                 # Plot poses
                 map = []
                 if poses is not None and len(poses) > 0:
-                    poses = np.array(poses)
                     ax.plot(poses[:, 0], poses[:, 1], "orange", label='Optimized Trajectory')
-                    for pose, range in zip(poses, ranges):
-                        angles = np.linspace(-np.pi, np.pi, len(range))
-                        x = pose[0] + range * np.cos(angles + pose[2])
-                        y = pose[1] + range * np.sin(angles + pose[2])
-                        x, y = x[range < 8], y[range < 8]
-                        map.extend(np.vstack((x, y)).T)
-                    map = np.array(map)
-                    ax.scatter(map[:, 0], map[:, 1], c='g', s=1)
-                        
-
+                    x, y = points[:, 0], points[:, 1]
+                    ax.scatter(x, y, c='g', s=1)
 
                 # Plot landmarks
                 if landmarks is not None and len(landmarks) > 0:
                     landmarks = np.array(landmarks)
-                    ax.scatter(landmarks[:, 0], landmarks[:, 1], c="r", label="Corners", s=4)
+                    ax.scatter(landmarks[:, 0], landmarks[:, 1], c="r", label="Landmarks", s=5)
 
                 ax.set_title("Dynamic Map")
                 ax.set_aspect('equal')
@@ -102,7 +94,8 @@ class DynamicMapUpdater:
                 frame_path = os.path.join(self.frames_dir, f"frame_{frame_count:04d}.png")
                 plt.savefig(frame_path)
                 frame_count += 1
-                plt.pause(0.2)
+                plt.pause(0.5)
+                
 
             except Empty:
                 pass

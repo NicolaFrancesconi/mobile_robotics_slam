@@ -4,6 +4,8 @@ import sys
 import signal
 from rclpy.node import Node
 import matplotlib.pyplot as plt
+import threading
+import keyboard
 
 import numpy as np
 from sensor_msgs.msg import LaserScan
@@ -24,6 +26,7 @@ from mobile_robotics_slam.Extractors.Corners.CornerExtractor import CornerExtrac
 from mobile_robotics_slam.GraphHandler.g2oGraphHandler import GraphHandler as g2oGraphHandler
 from mobile_robotics_slam.GraphHandler.GTSAMGraphHandler import GraphHandler as GTSAMGraphHandler
 from mobile_robotics_slam.ICP.ICP_SVD import icp
+from mobile_robotics_slam.MapGenerator.OnlineMap import DynamicMapUpdater
 
 
 DISTANCE_THRESHOLD = 0.4
@@ -31,7 +34,7 @@ ROTATION_THRESHOLD = np.deg2rad(5)
 
 
 
-class GraphSLamNode(Node):
+class GraphSlamNode(Node):
 
 ##################################################################
 # Initialization
@@ -40,26 +43,32 @@ class GraphSLamNode(Node):
         super().__init__("graph_slam_node", parameter_overrides=[]) 
 
         # Declare variables
-        self.OdomLastNodePose = np.array([None, None, None])
-        self.OptimizedLastNodePose = np.array([None, None, None])
+        self.OdomInitialPose = np.array([None, None, None])
+        self.OdomLastNodePose = np.zeros(3)
+        self.OptimizedLastNodePose = np.zeros(3)
         self.OptimizedLastNodeScan = None
         self.H_RL = self.pose_to_transform([-0.109, 0, 0]) # Set Laser frame position wrt Robot Frame (x,y, theta)
         self.first_pose_added = False
+        self.new_pose_added = False
+        self.add_last_pose = False
         self.reflector_extractor = ReflectorExtractor()
         self.corner_extractor = CornerExtractor()
         self.setup_extractor_parameters()
 
-        self.graph_handler = GTSAMGraphHandler()
-        #self.graph_handler = g2oGraphHandler()
+        #self.graph_handler = GTSAMGraphHandler()
+        self.graph_handler = g2oGraphHandler()
 
         self.real_trajectory = []
         self.odom_trajectory = []
 
         self.unoptimized_graph = UnoptimizedGraph()
+        self.dynamic_map = DynamicMapUpdater()
+        self.dynamic_map.start()
 
         self.odom_sub = message_filters.Subscriber(self, Odometry, "/dingo/odometry")
         self.scan_sub = message_filters.Subscriber(self, LaserScan, "/diff_drive/scan")
         self.real_pose_sub = message_filters.Subscriber(self, Odometry, "/diff_drive/real_pose")
+        self.map_update_timer = self.create_timer(3, self.map_timer_callback)
 
         # Approximate time synchronizer
         self.sync = message_filters.ApproximateTimeSynchronizer(
@@ -90,6 +99,25 @@ class GraphSLamNode(Node):
         min_density_after_segmentation = 12
         min_length_after_segmentation = 0.3
         self.corner_extractor.set_handler_params(epsilon, min_density_after_segmentation, min_length_after_segmentation)
+
+    def map_timer_callback(self):
+        if not self.new_pose_added:
+            return
+        poses, pointclouds, landmarks = self.graph_handler.get_optimized_poses_and_landmarks()
+        cartesian_points = []
+        robot_poses = []
+        
+        for pose, pointcloud in zip(poses, pointclouds):
+            angle = np.linspace(-np.pi, np.pi, len(pointcloud))
+            x = pose[0] + pointcloud * np.cos(angle + pose[2])
+            y = pose[1] + pointcloud * np.sin(angle + pose[2])
+            cartesian_points.extend(np.vstack((x, y)).T)
+            # In poses there is laser pose, we need to convert it to robot pose
+            robot_poses.append(self.transform_to_pose(self.pose_to_transform(pose)@np.linalg.inv(self.H_RL)))
+        
+        self.dynamic_map.add_data(robot_poses, landmarks, cartesian_points)
+        self.new_pose_added = False
+
 
     def compute_homo_transform(self, pose1, pose2):
         """
@@ -129,12 +157,14 @@ class GraphSLamNode(Node):
         return np.array([x,y,theta])
     
     def add_first_pose(self, odom: Odometry, scan: LaserScan, real: Odometry):
-        self.OdomLastNodePose = np.array([odom.pose.pose.position.x, odom.pose.pose.position.y, self.quaternion_to_euler(odom.pose.pose.orientation.x,odom.pose.pose.orientation.y,odom.pose.pose.orientation.z,odom.pose.pose.orientation.w)])
+        """Add the first pose to the graph"""
+        self.OdomReference = np.array([odom.pose.pose.position.x, odom.pose.pose.position.y, self.quaternion_to_euler(odom.pose.pose.orientation.x,odom.pose.pose.orientation.y,odom.pose.pose.orientation.z,odom.pose.pose.orientation.w)])
+        self.OdomLastNodePose = np.zeros(3) # Initialize First Pose as origin (0,0,0)
         self.OptimizedLastNodePose = np.zeros(3) # Initialize First Pose as origin (0,0,0)
         self.OptimizedLastNodeScan = np.array(scan.ranges)
-        robot_estimated_pose = np.zeros(3)
         laser_estimated_pose = self.transform_to_pose(self.H_RL) # Initialize Laser Pose as Laser Frame wrt Robot Frame
-        
+        self.odom_trajectory.append(np.copy(self.OdomLastNodePose))
+        self.real_trajectory.append(np.array([real.pose.pose.position.x, real.pose.pose.position.y, self.quaternion_to_euler(real.pose.pose.orientation.x,real.pose.pose.orientation.y,real.pose.pose.orientation.z,real.pose.pose.orientation.w)]))
         reflectors = []
         corners = []
         reflectors = self.extract_reflectors(scan, laser_estimated_pose)
@@ -143,27 +173,26 @@ class GraphSLamNode(Node):
         laser_optimized_pose = self.graph_handler.add_to_graph(laser_estimated_pose, np.array(scan.ranges), landmarks)
         T_laser_optimized = self.pose_to_transform(laser_optimized_pose)
         self.OptimizedLastNodePose = self.transform_to_pose(T_laser_optimized@np.linalg.inv(self.H_RL))
+        self.new_pose_added = True
 
 
     def synchronized_callback(self, odom: Odometry, scan: LaserScan, real: Odometry):
         start_time = time.time()
 
         # Store ODOM and REAL pose for Visualization
-        real_pose = np.array([real.pose.pose.position.x, real.pose.pose.position.y, self.quaternion_to_euler(real.pose.pose.orientation.x,real.pose.pose.orientation.y,real.pose.pose.orientation.z,real.pose.pose.orientation.w)])
-        odom_pose = np.array([odom.pose.pose.position.x, odom.pose.pose.position.y, self.quaternion_to_euler(odom.pose.pose.orientation.x,odom.pose.pose.orientation.y,odom.pose.pose.orientation.z,odom.pose.pose.orientation.w)])
-        self.odom_trajectory.append(np.copy(odom_pose))
-        self.real_trajectory.append(np.copy(real_pose))
-
         if not self.first_pose_added:
             self.add_first_pose(odom, scan, real)
             self.first_pose_added = True
             return
         
+        real_pose = np.array([real.pose.pose.position.x, real.pose.pose.position.y, self.quaternion_to_euler(real.pose.pose.orientation.x,real.pose.pose.orientation.y,real.pose.pose.orientation.z,real.pose.pose.orientation.w)])
+        odom_pose = np.array([odom.pose.pose.position.x, odom.pose.pose.position.y, self.quaternion_to_euler(odom.pose.pose.orientation.x,odom.pose.pose.orientation.y,odom.pose.pose.orientation.z,odom.pose.pose.orientation.w)])
+         
         #Estimate Motion of Robot Using Odometry
-        H_robot_odom, travel_distance, rotation = self.compute_homo_transform(self.OdomLastNodePose, odom_pose)
+        H_robot_odom, travel_distance, rotation = self.compute_homo_transform(self.OdomReference, odom_pose)
         
         #If Motion Higher than THRESHOLD correct it using ICP
-        if travel_distance > DISTANCE_THRESHOLD or rotation > ROTATION_THRESHOLD:
+        if travel_distance > DISTANCE_THRESHOLD or rotation > ROTATION_THRESHOLD or self.add_last_pose:
             
             #ICP is WRT Laser Frame so converti H_robot into H_laser
             H_laser_odom = np.dot(H_robot_odom,self.H_RL)  # Homogeneous Transform of LASER due to Odometry estimate)
@@ -181,11 +210,9 @@ class GraphSLamNode(Node):
             H_laser_icp = icp(current_points, previous_points, init_transform=H_laser_odom, downsample=4, max_iterations=30, max_range=15)
             H_robot_icp = H_laser_icp@(np.linalg.inv(self.H_RL))
 
-            #Update the estimated pose of the robot and laser
+            #Update the estimated pose of the laser given the ICP result
             Tr = self.pose_to_transform(self.OptimizedLastNodePose)
-            Tr = Tr@H_robot_icp
-            robot_estimated_pose = self.transform_to_pose(Tr)
-            laser_estimated_pose = self.transform_to_pose(Tr@self.H_RL)
+            laser_estimated_pose = self.transform_to_pose((Tr@H_robot_icp)@self.H_RL)
                 
             #Extract Landmarks from the scan wrt Laser Frame
             reflectors = []
@@ -202,22 +229,48 @@ class GraphSLamNode(Node):
             self.OptimizedLastNodePose = self.transform_to_pose(T_laser_optimized@np.linalg.inv(self.H_RL))
             
             #Store Data about the Node for the next iteration
-            self.OdomLastNodePose = np.copy(odom_pose)
+            Tr_odom = self.pose_to_transform(self.OdomLastNodePose)
+            self.OdomLastNodePose = self.transform_to_pose(Tr_odom@H_robot_odom)
+            self.OdomReference = np.copy(odom_pose)
             self.OptimizedLastNodeScan = np.copy(scan.ranges)
 
             #Store Data for Visualization
-            self.odom_trajectory.append(np.copy(odom_pose))
+            self.odom_trajectory.append(np.copy(self.OdomLastNodePose))
             self.real_trajectory.append(np.copy(real_pose))
-            self.unoptimized_graph.add_pose(odom_pose, np.array(scan.ranges), landmarks)
 
+            self.new_pose_added = True
             
+
             print("\n\nTime For Processing: ", time.time() - start_time)
             print(f"Odom Estimate: {self.OdomLastNodePose}")      
             print(f"Estimated Pose: {self.OptimizedLastNodePose}")
-            print(f"Real Pose: {real_pose}")                           
+            print(f"Real Pose: {real_pose}")
 
+            if self.add_last_pose:
+                print("Last Pose Added")
+                self.add_last_pose = False
+                self.save_data()
+    
+    def save_data(self):
+        poses, _, landmarks = self.graph_handler.get_optimized_poses_and_landmarks()
+        robot_trajectory = []
+        for pose in poses:
+            robot_trajectory.append(self.transform_to_pose(self.pose_to_transform(pose)@np.linalg.inv(self.H_RL)))
+        robot_trajectory = np.array(robot_trajectory)
+        
+        # If directory does not exist, create it
+        save_path = os.path.join(path, "trajectory_data")
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
 
+        # Save the data
+        np.savetxt(os.path.join(save_path, "robot_optimized.txt"), robot_trajectory)
+        np.savetxt(os.path.join(save_path,  "real_trajectory.txt"), np.array(self.real_trajectory))
+        np.savetxt(os.path.join(save_path,  "odom_trajectory.txt"), np.array(self.odom_trajectory))
+        np.savetxt(os.path.join(save_path,  "landmarks.txt"), np.array(landmarks))
 
+        print(f"Saved Data in Folder: {save_path} ")
+                       
 
     def extract_reflectors(self, scan: LaserScan, scan_frame_pose):
         """Extracts the reflectors from the scan and returns them as keypoints
@@ -278,27 +331,29 @@ class GraphSLamNode(Node):
         range = np.sqrt(x**2 + y**2)
         angle = np.arctan2(y, x)
         return np.array([range, angle])
-
-def save_data(node : GraphSLamNode):
-    # Save the optimized poses
-    pass #TODO: Implement this function to store data
     
-        
+    def signal_handler(self,sig, frame):
+        self.add_last_pose = True    
+    
+
+    
+
+
+
 def main(args=None):
     rclpy.init(args=args)
 
     print("SLAM node started")
 
-    slam_node = GraphSLamNode()
-
+    slam_node = GraphSlamNode()
+    signal.signal(signal.SIGINT, slam_node.signal_handler)
     try:
         rclpy.spin(slam_node)
-    except KeyboardInterrupt:
-        pass  # Graceful handling of Ctrl+C
+    except Exception as e:
+        print("Shutting down graph slam node.")
     finally:
-        save_data(slam_node)
         slam_node.destroy_node()
-        rclpy.try_shutdown()
+        rclpy.shutdown()
 
 
 class map_pose:
