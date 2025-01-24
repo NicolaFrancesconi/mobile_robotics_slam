@@ -36,6 +36,7 @@ ROS2 Package to perform GRAPH SLAM extracting Corners and Reflectors Features fr
    the  `mobile_robotics_slam/trajectory_data` directory. 
    The frame of the map are automatically stored in the [frames](/frames) directory. Once frames are present, you can transform them into
    a gif by running the python script: [MapGIFGenerator.py](mobile_robotics_slam/MapGenerator/MapGIFGenerator.py) and a gif like the following      will be created and it will be located in the [gif](/gif) directory.
+
    ![](gif/dynamic_map_no_ICP2.gif)
    
 
