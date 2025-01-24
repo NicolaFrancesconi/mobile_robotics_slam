@@ -11,7 +11,7 @@ ROS2 Package to perform GRAPH SLAM extracting Corners and Reflectors Features fr
           colcon build
       ```
 2. Before running the node be sure to subscribe correctly to your scan, odometry and real pose:
-   This code is located in the python file: `mobile_robotics_slam/mobile_robotics_slam/RosNodes/graph_slam_node.py`.
+   This code is located in the python file: [graph_slam_node.py](/mobile_robotics_slam/RosNodes/graph_slam_node.py).
       ```ruby
           self.odom_sub = message_filters.Subscriber(self, Odometry, "/dingo/odometry")
           self.scan_sub = message_filters.Subscriber(self, LaserScan, "/diff_drive/scan")
@@ -34,9 +34,8 @@ ROS2 Package to perform GRAPH SLAM extracting Corners and Reflectors Features fr
 
 4. While the node is running you can press `Ctrl + C` in the terminal to save the trajectory of the poses inserted in the graph as `.txt` file in
    the  `mobile_robotics_slam/trajectory_data` directory. 
-   The frame of the map are automatically stored in the `mobile_robotics_slam/frames` directory. Once frames are present, you can transform them into
-   a gif by running the python script: `mobile_robotics_slam/mobile_robotics_slam/MapGenerator/MapGifGenerator.py` and a gif like the following will be
-   created and it will be located in the `mobile_robotics_slam/gif` directory.
+   The frame of the map are automatically stored in the [frames](/frames) directory. Once frames are present, you can transform them into
+   a gif by running the python script: [MapGIFGenerator.py](mobile_robotics_slam/MapGenerator/MapGIFGenerator.py) and a gif like the following      will be created and it will be located in the [gif](/gif) directory.
    ![](gif/dynamic_map_no_ICP2.gif)
    
 
