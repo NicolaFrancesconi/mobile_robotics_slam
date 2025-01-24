@@ -56,7 +56,8 @@ class GraphSlamNode:
         self.OdomLastNodePose = np.zeros(3)
         self.OptimizedLastNodePose = np.zeros(3)
         self.OptimizedLastNodeScan = None
-        self.H_RL = self.pose_to_transform([-0.109, 0, 0]) # Set Laser frame position wrt Robot Frame (x,y, theta)
+        self.T_robot_laser = self.pose_to_transform([-0.109, 0, 0]) # Set Laser frame position wrt Robot Frame (x,y, theta)
+        self.T_laser_robot = np.linalg.inv(self.T_robot_laser)
         self.first_pose_added = False
         self.new_pose_added = False
         self.add_last_pose = False
@@ -115,14 +116,17 @@ class GraphSlamNode:
         poses, pointclouds, landmarks = self.graph_handler.get_optimized_poses_and_landmarks()
         cartesian_points = []
         robot_poses = []
-        
+
         for pose, pointcloud in zip(poses, pointclouds):
+
+            distance_mask = pointcloud<5
             angle = np.linspace(-np.pi, np.pi, len(pointcloud))
             x = pose[0] + pointcloud * np.cos(angle + pose[2])
             y = pose[1] + pointcloud * np.sin(angle + pose[2])
-            cartesian_points.extend(np.vstack((x, y)).T)
+
+            cartesian_points.extend(np.vstack((x[distance_mask], y[distance_mask])).T)
             # In poses there is laser pose, we need to convert it to robot pose
-            robot_poses.append(self.transform_to_pose(self.pose_to_transform(pose)@np.linalg.inv(self.H_RL)))
+            robot_poses.append(self.transform_to_pose(self.pose_to_transform(pose)@self.T_laser_robot))
         
         self.dynamic_map.add_data(robot_poses, landmarks, cartesian_points)
         self.new_pose_added = False
@@ -160,7 +164,8 @@ class GraphSlamNode:
         self.OdomLastNodePose = np.zeros(3) # Initialize First Pose as origin (0,0,0)
         self.OptimizedLastNodePose = np.zeros(3) # Initialize First Pose as origin (0,0,0)
         self.OptimizedLastNodeScan = np.array(scan.ranges)
-        laser_estimated_pose = self.transform_to_pose(self.H_RL) # Initialize Laser Pose as Laser Frame wrt Robot Frame
+        laser_estimated_pose = self.transform_to_pose(self.T_robot_laser)
+        print("Laser Estimated Pose", laser_estimated_pose) # Initialize Laser Pose as Laser Frame wrt Robot Frame
         self.odom_trajectory.append(np.copy(self.OdomLastNodePose))
         reflectors = []
         corners = []
@@ -169,11 +174,12 @@ class GraphSlamNode:
             corners = self.extract_corners(scan, laser_estimated_pose)
         if EXTRACT_REFLECTORS:
             reflectors = self.extract_reflectors(scan, laser_estimated_pose)
+            print(f"Extracted {len(reflectors)} reflectors")
         
         landmarks = reflectors + corners
         laser_optimized_pose = self.graph_handler.add_to_graph(laser_estimated_pose, np.array(scan.ranges), landmarks)
         T_laser_optimized = self.pose_to_transform(laser_optimized_pose)
-        self.OptimizedLastNodePose = self.transform_to_pose(T_laser_optimized@np.linalg.inv(self.H_RL))
+        self.OptimizedLastNodePose = self.transform_to_pose(T_laser_optimized@self.T_laser_robot)
         self.new_pose_added = True
 
 
@@ -196,7 +202,7 @@ class GraphSlamNode:
         if travel_distance > DISTANCE_THRESHOLD or rotation > ROTATION_THRESHOLD or self.add_last_pose:
             
             #ICP is WRT Laser Frame so converti H_robot into H_laser
-            H_laser_odom = np.dot(H_robot_odom,self.H_RL)  # Homogeneous Transform of LASER due to Odometry estimate)
+            H_laser_odom = self.T_laser_robot@H_robot_odom@self.T_robot_laser  # Homogeneous Transform of LASER due to Odometry estimate)
             
             #Prepare previous and current scan for ICP
             angles = np.linspace(scan.angle_min, scan.angle_max, len(scan.ranges))
@@ -209,19 +215,22 @@ class GraphSlamNode:
 
             #Perform ICP to estimate a better H_laser and thus H_robot
             H_laser_icp = icp(current_points, previous_points, init_transform=H_laser_odom, downsample=4, max_iterations=30, max_range=15)
-            H_robot_icp = H_laser_icp@(np.linalg.inv(self.H_RL))
+            H_robot_icp = self.T_robot_laser@H_laser_icp@(self.T_laser_robot)
 
             #Update the estimated pose of the laser given the ICP result
             Tr = self.pose_to_transform(self.OptimizedLastNodePose)
-            laser_estimated_pose = self.transform_to_pose((Tr@H_robot_icp)@self.H_RL)
+            laser_estimated_pose = self.transform_to_pose((Tr@H_robot_icp)@self.T_robot_laser)
+            robot_estimated_pose = self.transform_to_pose(Tr@H_robot_icp)
                 
             #Extract Landmarks from the scan wrt Laser Frame
             reflectors = []
             corners = []
+
             if EXTRACT_CORNER:
                 corners = self.extract_corners(scan, laser_estimated_pose)
             if EXTRACT_REFLECTORS:
                 reflectors = self.extract_reflectors(scan, laser_estimated_pose)
+
             landmarks = reflectors + corners
             
             #Add the estimated of laser pose to the graph and get the optimized pose of laser
@@ -229,7 +238,7 @@ class GraphSlamNode:
             T_laser_optimized = self.pose_to_transform(laser_optimized_pose)
 
             #Update the optimized pose of the robot given the optimized pose of the laser
-            self.OptimizedLastNodePose = self.transform_to_pose(T_laser_optimized@np.linalg.inv(self.H_RL))
+            self.OptimizedLastNodePose = self.transform_to_pose(T_laser_optimized@self.T_laser_robot)
             
             #Store Data about the Node for the next iteration
             Tr_odom = self.pose_to_transform(self.OdomLastNodePose)
@@ -244,11 +253,11 @@ class GraphSlamNode:
             
 
             print("\n\nTime For Processing: ", time.time() - start_time)
-            print(f"Odom Estimate: {self.OdomLastNodePose}")      
+            print(f"Odom Estimate: {self.OdomLastNodePose}")
             print(f"Estimated Pose: {self.OptimizedLastNodePose}")
 
             if self.add_last_pose:
-                print("Last Pose Added")
+                print("Current Pose Added")
                 self.add_last_pose = False
                 self.save_data()
 
@@ -256,7 +265,7 @@ class GraphSlamNode:
         poses, _, landmarks = self.graph_handler.get_optimized_poses_and_landmarks()
         robot_trajectory = []
         for pose in poses:
-            robot_trajectory.append(self.transform_to_pose(self.pose_to_transform(pose)@np.linalg.inv(self.H_RL)))
+            robot_trajectory.append(self.transform_to_pose(self.pose_to_transform(pose)@self.T_laser_robot))
         robot_trajectory = np.array(robot_trajectory)
         
         # If directory does not exist, create it
