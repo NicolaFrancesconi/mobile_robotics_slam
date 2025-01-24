@@ -17,7 +17,7 @@ ROS2 Package to perform GRAPH SLAM extracting Corners and Reflectors Features fr
           self.scan_sub = message_filters.Subscriber(self, LaserScan, "/diff_drive/scan")
           self.real_pose_sub = message_filters.Subscriber(self, Odometry, "/diff_drive/real_pose")    
       ```
-    WARNING: IF THE REAL POSE OF ROBOT IS NOT AVAILABLE, substitute set the odometry as real pose:
+    WARNING: IF THE REAL POSE OF ROBOT IS NOT AVAILABLE, substitute the real pose topic with the odometry one:
       ```ruby
           self.odom_sub = message_filters.Subscriber(self, Odometry, "/dingo/odometry")
           self.scan_sub = message_filters.Subscriber(self, LaserScan, "/diff_drive/scan")
