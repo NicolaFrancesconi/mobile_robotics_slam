@@ -22,7 +22,7 @@ ROS2 Package to perform GRAPH SLAM extracting Corners and Reflectors Features fr
       ```ruby
             ODOM_TOPIC = "/odometry/filtered"  # Topic where the scan is published
             SCAN_TOPIC = "/scan"  # Topic where the odometry is published
-            REAL_POSE_TOPIC = "/odometry/filtered  # Topic where the real pose is published    
+            REAL_POSE_TOPIC = "/odometry/filtered"  # Topic where the real pose is published    
       ```
 
 3. Open a new terminal. To run the node you have first of all to source ros and install the setup.bash in the root of your workspace
