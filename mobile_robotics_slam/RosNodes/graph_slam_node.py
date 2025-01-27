@@ -10,6 +10,14 @@ from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry
 import time
 import message_filters
+from ament_index_python.packages import get_package_share_directory
+
+try:
+    package_share_dir = get_package_share_directory('mobile_robotics_slam')
+    print("Package Share Directory: ", package_share_dir)
+except:
+    pass
+
 
 path = __file__
 file_location_subfolders = 3 #Number of folder to go up to reach root of package
