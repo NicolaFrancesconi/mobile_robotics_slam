@@ -9,36 +9,27 @@ from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry
 import time
 import message_filters
+import rospkg
 
-# Necessary to run the script from visual studio code
-path = __file__
-file_location_subfolders = 3 #Number of folder to go up to reach root of package
-for _ in range(file_location_subfolders):
-    path = os.path.dirname(path)
-sys.path.insert(0, path)
+try:
+    rospack = rospkg.RosPack()
+    package_dir = rospack.get_path('mobile_robotics_slam')
+    sys.path.insert(0, package_dir)
+except:
+    path = __file__
+    file_location_subfolders = 3 #Number of folder to go up to reach root of package
+    for _ in range(file_location_subfolders):
+        path = os.path.dirname(path)
+    package_dir = path
+    sys.path.insert(0, package_dir)
 
 from mobile_robotics_slam.Extractors.Reflectors.ReflectorExtractor import ReflectorExtractor
 from mobile_robotics_slam.Extractors.Corners.CornerExtractor import CornerExtractor
 from mobile_robotics_slam.GraphHandler.GTSAMGraphHandler import GraphHandler as GTSAMGraphHandler
-from mobile_robotics_slam.MotionCompensation.MotionCompensation import LaserMotionCompensator as MotionCompensator
 from mobile_robotics_slam.ICP.ICP_SVD import icp
 from mobile_robotics_slam.MapGenerator.OnlineMap import DynamicMapUpdater
+import mobile_robotics_slam.Params.real_params as params
 
-
-DISTANCE_THRESHOLD = 0.2
-ROTATION_THRESHOLD = np.deg2rad(3)
-EXTRACT_CORNER = False
-EXTRACT_REFLECTORS = True
-
-def remove_png_files(folder_path):
-    try:
-        for file_name in os.listdir(folder_path):
-            if file_name.endswith(".png"):
-                file_path = os.path.join(folder_path, file_name)
-                os.remove(file_path)
-                print(f"Removed: {file_path}")
-    except Exception as e:
-        print(f"Error: {e}")
 
 
 class GraphSlamNode:
@@ -49,14 +40,13 @@ class GraphSlamNode:
     def __init__(self):
         # Initialize the ROS node
         rospy.init_node("graph_slam_node", anonymous=True)
-        remove_png_files(path)
 
         # Declare variables
         self.OdomInitialPose = np.array([None, None, None])
         self.OdomLastNodePose = np.zeros(3)
         self.OptimizedLastNodePose = np.zeros(3)
         self.OptimizedLastNodeScan = None
-        self.T_robot_laser = self.pose_to_transform([-0.109, 0, 0]) # Set Laser frame position wrt Robot Frame (x,y, theta)
+        self.T_robot_laser = self.pose_to_transform(params.ROBOT_LASER_FRAME_OFFSET) # Set Laser frame position wrt Robot Frame (x,y, theta)
         self.T_laser_robot = np.linalg.inv(self.T_robot_laser)
         self.first_pose_added = False
         self.new_pose_added = False
@@ -71,9 +61,9 @@ class GraphSlamNode:
         self.odom_trajectory = []
         self.real_trajectory = []
 
-        self.odom_sub = message_filters.Subscriber("/odometry/filtered", Odometry)
-        self.scan_sub = message_filters.Subscriber("/scan", LaserScan)
-        self.real_pose_sub = message_filters.Subscriber("/odometry/filtered", Odometry )
+        self.odom_sub = message_filters.Subscriber(params.ODOM_TOPIC, Odometry)
+        self.scan_sub = message_filters.Subscriber(params.SCAN_TOPIC, LaserScan)
+        self.real_pose_sub = message_filters.Subscriber(params.REAL_POSE_TOPIC, Odometry )
 
         self.dynamic_map = DynamicMapUpdater()
         self.dynamic_map.start()
@@ -93,23 +83,23 @@ class GraphSlamNode:
 
     def setup_extractor_parameters(self):
         # Set the parameters of the Corner Extractor
-        min_corner_angle = 85
-        max_corner_angle = 95
-        max_intersecton_distance = 0.4
+        min_corner_angle = params.MIN_CORNER_ANGLE
+        max_corner_angle = params.MAX_CORNER_ANGLE
+        max_intersecton_distance = params.MAX_INTERSECTION_DISTANCE
         self.corner_extractor.set_corner_params(max_intersecton_distance, min_corner_angle, max_corner_angle)
 
         # Set the parameters of the Adaptive Segment Detector
-        sigma_ranges = 0.20
-        lambda_angle = 10
-        merge_distance = 0.15
-        min_points_density = 5
-        min_segment_length = 0.2
+        sigma_ranges = params.SIGMA_RANGES
+        lambda_angle = params.LAMBDA_ANGLE
+        merge_distance = params.MERGE_DISTANCE
+        min_points_density = params.MIN_POINT_DENSITY
+        min_segment_length = params.MIN_SEGMENT_LENGTH
         self.corner_extractor.set_detector_params(sigma_ranges, lambda_angle, merge_distance, min_points_density, min_segment_length)
 
         # Set the parameters of the Segment Handler
-        epsilon = 0.12
-        min_density_after_segmentation = 5
-        min_length_after_segmentation = 0.2
+        epsilon = params.EPSILON
+        min_density_after_segmentation = params.MIN_DENSITY_AFTER_SEGMENTATION
+        min_length_after_segmentation = params.MIN_LENGTH_AFTER_SEGMENTATION
         self.corner_extractor.set_handler_params(epsilon, min_density_after_segmentation, min_length_after_segmentation)
 
     def map_timer_callback(self, event):
@@ -121,7 +111,7 @@ class GraphSlamNode:
 
         for pose, pointcloud in zip(poses, pointclouds):
 
-            distance_mask = pointcloud<5
+            distance_mask = pointcloud< params.MAP_SCAN_DISTANCE_THRESHOLD
             angle = np.linspace(-np.pi, np.pi, len(pointcloud))
             x = pose[0] + pointcloud * np.cos(angle + pose[2])
             y = pose[1] + pointcloud * np.sin(angle + pose[2])
@@ -172,9 +162,9 @@ class GraphSlamNode:
         reflectors = []
         corners = []
 
-        if EXTRACT_CORNER:
+        if params.EXTRACT_CORNER:
             corners = self.extract_corners(scan, laser_estimated_pose)
-        if EXTRACT_REFLECTORS:
+        if params.EXTRACT_REFLECTORS:
             reflectors = self.extract_reflectors(scan, laser_estimated_pose)
             print(f"Extracted {len(reflectors)} reflectors")
         
@@ -202,7 +192,7 @@ class GraphSlamNode:
         H_robot_odom, travel_distance, rotation = self.compute_homo_transform(self.OdomReference, odom_pose)
         
         #If Motion Higher than THRESHOLD correct it using ICP
-        if travel_distance > DISTANCE_THRESHOLD or rotation > ROTATION_THRESHOLD or self.add_last_pose:
+        if travel_distance > params.DISTANCE_THRESHOLD or rotation > params.ROTATION_THRESHOLD or self.add_last_pose:
             
             #ICP is WRT Laser Frame so converti H_robot into H_laser
             H_laser_odom = self.T_laser_robot@H_robot_odom@self.T_robot_laser  # Homogeneous Transform of LASER due to Odometry estimate)
@@ -229,9 +219,9 @@ class GraphSlamNode:
             reflectors = []
             corners = []
 
-            if EXTRACT_CORNER:
+            if params.EXTRACT_CORNER:
                 corners = self.extract_corners(scan, laser_estimated_pose)
-            if EXTRACT_REFLECTORS:
+            if params.EXTRACT_REFLECTORS:
                 reflectors = self.extract_reflectors(scan, laser_estimated_pose)
 
             landmarks = reflectors + corners
@@ -273,7 +263,7 @@ class GraphSlamNode:
         robot_trajectory = np.array(robot_trajectory)
         
         # If directory does not exist, create it
-        save_path = os.path.join(path, "trajectory_data")
+        save_path = os.path.join(package_dir, "trajectory_data")
         if not os.path.exists(save_path):
             os.makedirs(save_path)
 
