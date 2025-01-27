@@ -12,17 +12,17 @@ ROS2 Package to perform GRAPH SLAM extracting Corners and Reflectors Features fr
 
       ```
 2. Before running the node be sure to subscribe correctly to your scan, odometry and real pose:
-   This code is located in the python file: [graph_slam_node_ros1.py](/mobile_robotics_slam/RosNodes/graph_slam_node_ros1.py).
+   To do this go in the param file: [simulation_params.py](/mobile_robotics_slam/Params/simulation_params.py).
       ```ruby
-            self.odom_sub = message_filters.Subscriber("/odometry/filtered", Odometry)
-            self.scan_sub = message_filters.Subscriber("/scan", LaserScan)
-            self.real_pose_sub = message_filters.Subscriber("/real_pose", Odometry )  
+            ODOM_TOPIC = "/odometry/filtered"  # Topic where the scan is published
+            SCAN_TOPIC = "/scan"  # Topic where the odometry is published
+            REAL_POSE_TOPIC = "/real_pose"  # Topic where the real pose is published  
       ```
     WARNING: IF THE REAL POSE OF ROBOT IS NOT AVAILABLE, substitute the real pose topic with the odometry one:
       ```ruby
-            self.odom_sub = message_filters.Subscriber("/odometry/filtered", Odometry)
-            self.scan_sub = message_filters.Subscriber("/scan", LaserScan)
-            self.real_pose_sub = message_filters.Subscriber("/real_pose", Odometry )    
+            ODOM_TOPIC = "/odometry/filtered"  # Topic where the scan is published
+            SCAN_TOPIC = "/scan"  # Topic where the odometry is published
+            REAL_POSE_TOPIC = "/odometry/filtered  # Topic where the real pose is published    
       ```
 
 3. Open a new terminal. To run the node you have first of all to source ros and install the setup.bash in the root of your workspace
@@ -30,7 +30,7 @@ ROS2 Package to perform GRAPH SLAM extracting Corners and Reflectors Features fr
           source /opt/ros/<ROS_DISTRO>/setup.bash
           cd ~/your_workspace/
           . devel/setup.bash
-          rosrun mobile_robotics_slam graph_slam_node
+          rosrun mobile_robotics_slam graph_slam_node_ros1.py
       ```
 
 4. While the node is running you can press `Ctrl + C` in the terminal to save the trajectory of the poses inserted in the graph as `.txt` file in
