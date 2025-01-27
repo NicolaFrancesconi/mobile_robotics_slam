@@ -120,7 +120,7 @@ class GTSAMGraphOptimizer:
         """
         print(f"Optimizing Graph with {self.graph.size()} factors")
         params = gtsam.LevenbergMarquardtParams()
-        params.setVerbosityLM("SUMMARY")
+        #params.setVerbosityLM("SUMMARY")
         params.setMaxIterations(max_iterations)
         optimizer = gtsam.LevenbergMarquardtOptimizer(self.graph, self.actual_estimate, params)
         self.actual_estimate = optimizer.optimize()
