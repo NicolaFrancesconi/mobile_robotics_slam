@@ -23,12 +23,12 @@ except:
     package_dir = path
     sys.path.insert(0, package_dir)
 
-from mobile_robotics_slam.Extractors.Reflectors.ReflectorExtractor import ReflectorExtractor
+from mobile_robotics_slam.Extractors.Reflectors.ReflectorExtractorReal import CircularMarker as ReflectorExtractor
 from mobile_robotics_slam.Extractors.Corners.CornerExtractor import CornerExtractor
 from mobile_robotics_slam.GraphHandler.GTSAMGraphHandler import GraphHandler as GTSAMGraphHandler
 from mobile_robotics_slam.ICP.ICP_SVD import icp
 from mobile_robotics_slam.MapGenerator.OnlineMap import DynamicMapUpdater
-import mobile_robotics_slam.Params.real_params as params
+import mobile_robotics_slam.Params.simulation_params as params
 
 
 
@@ -276,13 +276,9 @@ class GraphSlamNode:
         print(f"Saved Data in Folder: {save_path} ")
 
     def extract_reflectors(self, scan: LaserScan, laser_estimated_pose):
-        pointcloud = np.array(scan.ranges)
-        intensities = np.array(scan.intensities)
-        field_of_view = scan.angle_max - scan.angle_min
-        angle_min = scan.angle_min
-        self.reflector_extractor.extract_reflectors(pointcloud, intensities, field_of_view, angle_min, laser_estimated_pose)
-        keypoints = self.reflector_extractor.get_reflectors()
-        return keypoints
+        pointcloud2 = self.reflector_extractor.laser_msg_to_pointcloud_np(scan, laser_estimated_pose)
+        reflectors= self.reflector_extractor.reflector_centre_gauss(pointcloud2, 3)
+        return reflectors
 
     def extract_corners(self, scan: LaserScan, laser_estimated_pose):
         pointcloud = np.array(scan.ranges)

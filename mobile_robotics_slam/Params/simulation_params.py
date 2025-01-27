@@ -1,14 +1,14 @@
 import numpy as np
 
 #### START GRAPH SLAM PARAMETERS ####
-DISTANCE_THRESHOLD = 0.4  # Distance threshold to create a new node
-ROTATION_THRESHOLD = np.deg2rad(5) # Rotation threshold to create a new node
+DISTANCE_THRESHOLD = 0.2  # Distance threshold to create a new node
+ROTATION_THRESHOLD = np.deg2rad(3) # Rotation threshold to create a new node
 EXTRACT_CORNER = False  # Extract corners from the scan
 EXTRACT_REFLECTORS = True   # Extract reflectors from the scan
-ROBOT_LASER_FRAME_OFFSET = [-0.109, 0, 0]  # Offset (x, y, theta) between the laser and the robot frame
-ODOM_TOPIC = "/dingo/odometry"  # Topic where the scan is published
-SCAN_TOPIC = "/diff_drive/scan"  # Topic where the odometry is published
-REAL_POSE_TOPIC = "/diff_drive/real_pose"  # Topic where the real pose is published
+ROBOT_LASER_FRAME_OFFSET = [-0.109, 0, 0]  # Offset (x, y, theta) From Robot frame to laser frame
+ODOM_TOPIC = "/odometry/filtered"  # Topic where the scan is published
+SCAN_TOPIC = "/scan"  # Topic where the odometry is published
+REAL_POSE_TOPIC = "/odometry/filtered"  # Topic where the real pose is published
 MAP_SCAN_DISTANCE_THRESHOLD = 9 # Maximum Range of the scan points to add them to the map
 #### START GRAPH SLAM PARAMETERS ####
 
@@ -25,19 +25,19 @@ MIN_RANGE_EXTRACTION = 0.01 # Minimum range of the reflectors
 #### START CORNER EXTRACTOR PARAMETERS ####
 MIN_CORNER_ANGLE = 85 # Minimum angle between two segments to consider their intersecttion as a corner
 MAX_CORNER_ANGLE = 95 # Maximum angle between two segments to consider their intersecttion as a corner
-MAX_INTERSECTION_DISTANCE = 0.5 # Maximum distance between the intersection point and the segments to consider it as a corner
+MAX_INTERSECTION_DISTANCE = 0.4 # Maximum distance between the intersection point and the segments to consider it as a corner
 
 # Set the parameters of the Adaptive Segment Detector
-SIGMA_RANGES = 0.15 # Standard deviation of the Gaussian kernel for the range
+SIGMA_RANGES = 0.2 # Standard deviation of the Gaussian kernel for the range
 LAMBDA_ANGLE = 10   # Parameter of the Adaptive Segment Detector
 MERGE_DISTANCE = 0.07 # Maximum distance between two segments endpoints to merge them
-MIN_POINT_DENSITY = 10 # Minimum number of points to consider a segment
-MIN_SEGMENT_LENGTH = 0.5 # Minimum length of a segment to be considered
+MIN_POINT_DENSITY = 5 # Minimum number of points to consider a segment
+MIN_SEGMENT_LENGTH = 0.2 # Minimum length of a segment to be considered
 
 # Set the parameters of the Segment Handler
-EPSILON = 0.1 # Minimum distance between Line and a point to determine if the point is on the line
-MIN_DENSITY_AFTER_SEGMENTATION = 12 # Minimum number of points to consider a segment after segmentation
-MIN_LENGTH_AFTER_SEGMENTATION = 0.3 # Minimum length of a segment to be considered after segmentation
+EPSILON = 0.12 # Minimum distance between Line and a point to determine if the point is on the line
+MIN_DENSITY_AFTER_SEGMENTATION = 5 # Minimum number of points to consider a segment after segmentation
+MIN_LENGTH_AFTER_SEGMENTATION = 0.2 # Minimum length of a segment to be considered after segmentation
 #### END CORNER EXTRACTOR PARAMETERS ####
 
 #### START CORNER MATCHING PARAMETERS ####

@@ -30,7 +30,7 @@ ROS2 Package to perform GRAPH SLAM extracting Corners and Reflectors Features fr
           source /opt/ros/<ROS_DISTRO>/setup.bash
           cd ~/your_workspace/
           . devel/setup.bash
-          rosrun mobile_robotics_slam graph_slam_node_ros1.py
+          rosrun mobile_robotics_slam graph_slam_node_ros1
       ```
 
 4. While the node is running you can press `Ctrl + C` in the terminal to save the trajectory of the poses inserted in the graph as `.txt` file in
