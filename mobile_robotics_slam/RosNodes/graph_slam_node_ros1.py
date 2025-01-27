@@ -69,9 +69,11 @@ class GraphSlamNode:
         #self.graph_handler = g2oGraphHandler()
     
         self.odom_trajectory = []
+        self.real_trajectory = []
 
         self.odom_sub = message_filters.Subscriber("/odometry/filtered", Odometry)
         self.scan_sub = message_filters.Subscriber("/scan", LaserScan)
+        self.real_pose_sub = message_filters.Subscriber("/odometry/filtered", Odometry )
 
         self.dynamic_map = DynamicMapUpdater()
         self.dynamic_map.start()
@@ -80,7 +82,7 @@ class GraphSlamNode:
 
         # Approximate time synchronizer
         self.sync = message_filters.ApproximateTimeSynchronizer(
-            [self.odom_sub, self.scan_sub],
+            [self.odom_sub, self.scan_sub, self.real_pose_sub],
             queue_size=10,
             slop=0.02  # Max difference between timestamps
         )
@@ -183,7 +185,7 @@ class GraphSlamNode:
         self.new_pose_added = True
 
 
-    def synchronized_callback(self, odom: Odometry, scan: LaserScan):
+    def synchronized_callback(self, odom: Odometry, scan: LaserScan, real: Odometry):
 
         start_time = time.time()
 
@@ -193,6 +195,7 @@ class GraphSlamNode:
             self.first_pose_added = True
             return
         
+        real_pose = np.array([real.pose.pose.position.x, real.pose.pose.position.y, self.quaternion_to_euler(real.pose.pose.orientation.x,real.pose.pose.orientation.y,real.pose.pose.orientation.z,real.pose.pose.orientation.w)])
         odom_pose = np.array([odom.pose.pose.position.x, odom.pose.pose.position.y, self.quaternion_to_euler(odom.pose.pose.orientation.x,odom.pose.pose.orientation.y,odom.pose.pose.orientation.z,odom.pose.pose.orientation.w)])
          
         #Estimate Motion of Robot Using Odometry
@@ -248,6 +251,7 @@ class GraphSlamNode:
 
             #Store Data for Visualization
             self.odom_trajectory.append(np.copy(self.OdomLastNodePose))
+            self.real_trajectory.append(np.copy(real_pose))
 
             self.new_pose_added = True
             
