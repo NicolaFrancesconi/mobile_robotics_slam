@@ -9,13 +9,23 @@ from sensor_msgs.msg import LaserScan
 from visualization_msgs.msg import Marker, MarkerArray
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseArray, Pose
+from ament_index_python.packages import get_package_share_directory
 
-
-path = __file__
-file_location_subfolders = 3 #Number of folder to go up to reach root of package
-for _ in range(file_location_subfolders):
-    path = os.path.dirname(path)
-sys.path.insert(0, path)
+try:
+    package_share_dir = get_package_share_directory('mobile_robotics_slam')
+    file_location_subfolders = 4 #Number of folder to go up to reach root of package
+    for _ in range(file_location_subfolders):
+        package_share_dir = os.path.dirname(package_share_dir)
+    package_dir = os.path.join(package_share_dir, "mobile_robotics_slam")
+    print("Package Directory: ", package_dir)
+except:
+    path = __file__
+    file_location_subfolders = 3 #Number of folder to go up to reach root of package
+    for _ in range(file_location_subfolders):
+        path = os.path.dirname(path)
+    package_dir = path
+    sys.path.insert(0, package_dir)
+    print("Package Directory: ", package_dir)
 
 
 from mobile_robotics_slam.Extractors.Corners.CornerExtractor import CornerExtractor

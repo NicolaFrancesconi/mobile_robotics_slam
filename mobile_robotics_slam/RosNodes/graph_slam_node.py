@@ -14,16 +14,19 @@ from ament_index_python.packages import get_package_share_directory
 
 try:
     package_share_dir = get_package_share_directory('mobile_robotics_slam')
-    print("Package Share Directory: ", package_share_dir)
+    file_location_subfolders = 4 #Number of folder to go up to reach root of package
+    for _ in range(file_location_subfolders):
+        package_share_dir = os.path.dirname(package_share_dir)
+    package_dir = os.path.join(package_share_dir, "mobile_robotics_slam")
+    print("Package Directory: ", package_dir)
 except:
-    pass
-
-
-path = __file__
-file_location_subfolders = 3 #Number of folder to go up to reach root of package
-for _ in range(file_location_subfolders):
-    path = os.path.dirname(path)
-sys.path.insert(0, path)
+    path = __file__
+    file_location_subfolders = 3 #Number of folder to go up to reach root of package
+    for _ in range(file_location_subfolders):
+        path = os.path.dirname(path)
+    package_dir = path
+    sys.path.insert(0, package_dir)
+    print("Package Directory: ", package_dir)
 
 
 
@@ -272,7 +275,7 @@ class GraphSlamNode(Node):
         robot_trajectory = np.array(robot_trajectory)
         
         # If directory does not exist, create it
-        save_path = os.path.join(path, "trajectory_data")
+        save_path = os.path.join(package_dir, "trajectory_data")
         if not os.path.exists(save_path):
             os.makedirs(save_path)
 
