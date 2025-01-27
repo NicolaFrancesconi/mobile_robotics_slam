@@ -48,8 +48,7 @@ class DynamicMapUpdater:
                 continue  # If queue is empty, exit the loop
 
             except KeyboardInterrupt:
-                print("Shutting down dynamic map updater.")
-                sys.exit(0)
+                pass
 
         # Add new data
         self.data_queue.put((poses, landmarks, points))

@@ -26,7 +26,6 @@ catkin_package(
 catkin_install_python(
   PROGRAMS
     mobile_robotics_slam/RosNodes/corner_extractor_node_ros1.py
-    mobile_robotics_slam/RosNodes/graph_slam_node_Real_Reflector.py
     mobile_robotics_slam/RosNodes/graph_slam_node_ros1.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
