@@ -11,17 +11,17 @@ ROS2 Package to perform GRAPH SLAM extracting Corners and Reflectors Features fr
           colcon build
       ```
 2. Before running the node be sure to subscribe correctly to your scan, odometry and real pose:
-   This code is located in the python file: [graph_slam_node.py](/mobile_robotics_slam/RosNodes/graph_slam_node.py).
+   To do this go in the param file: [simulation_params.py](/mobile_robotics_slam/Params/simulation_params.py).
       ```ruby
-          self.odom_sub = message_filters.Subscriber(self, Odometry, "/dingo/odometry")
-          self.scan_sub = message_filters.Subscriber(self, LaserScan, "/diff_drive/scan")
-          self.real_pose_sub = message_filters.Subscriber(self, Odometry, "/diff_drive/real_pose")    
+            ODOM_TOPIC = "/odometry/filtered"  # Topic where the scan is published
+            SCAN_TOPIC = "/scan"  # Topic where the odometry is published
+            REAL_POSE_TOPIC = "/real_pose"  # Topic where the real pose is published  
       ```
     WARNING: IF THE REAL POSE OF ROBOT IS NOT AVAILABLE, substitute the real pose topic with the odometry one:
       ```ruby
-          self.odom_sub = message_filters.Subscriber(self, Odometry, "/dingo/odometry")
-          self.scan_sub = message_filters.Subscriber(self, LaserScan, "/diff_drive/scan")
-          self.real_pose_sub = message_filters.Subscriber(self, Odometry, "/dingo/odometry")    
+            ODOM_TOPIC = "/odometry/filtered"  # Topic where the scan is published
+            SCAN_TOPIC = "/scan"  # Topic where the odometry is published
+            REAL_POSE_TOPIC = "/odometry/filtered"  # Topic where the real pose is published    
       ```
 
 3. Open a new terminal. To run the node you have first of all to source ros and install the setup.bash in the root of your workspace

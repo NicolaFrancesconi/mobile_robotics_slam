@@ -78,7 +78,7 @@ class DynamicMapUpdater:
                 # Plot poses
                 map = []
                 if poses is not None and len(poses) > 0:
-                    ax.plot(poses[:, 0], poses[:, 1], "orange", label='Optimized Trajectory')
+                    ax.plot(poses[:, 0], poses[:, 1], "orange", label='Trajectory')
                     x, y = points[:, 0], points[:, 1]
                     ax.scatter(x, y, c='g', s=1)
 
@@ -87,12 +87,12 @@ class DynamicMapUpdater:
                     landmarks = np.array(landmarks)
                     ax.scatter(landmarks[:, 0], landmarks[:, 1], c="r", label="Landmarks", s=5)
 
-                ax.set_title("Dynamic Map")
+                ax.set_title("Online Map")
                 ax.set_aspect('equal')
-                ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1), borderaxespad=0.)
+                ax.legend(loc='upper left', bbox_to_anchor=(1, 1.01), borderaxespad=0.)
                 print("Map Updated")
                 frame_path = os.path.join(self.frames_dir, f"frame_{frame_count:04d}.png")
-                plt.savefig(frame_path)
+                plt.savefig(frame_path, bbox_inches="tight")
                 frame_count += 1
                 plt.pause(0.5)
                 

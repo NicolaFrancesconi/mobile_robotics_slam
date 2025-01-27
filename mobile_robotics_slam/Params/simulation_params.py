@@ -9,7 +9,7 @@ ROBOT_LASER_FRAME_OFFSET = [-0.109, 0, 0]  # Offset (x, y, theta) between the la
 ODOM_TOPIC = "/dingo/odometry"  # Topic where the scan is published
 SCAN_TOPIC = "/diff_drive/scan"  # Topic where the odometry is published
 REAL_POSE_TOPIC = "/diff_drive/real_pose"  # Topic where the real pose is published
-MAP_SCAN_DISTANCE_THRESHOLD = 9 # Maximum Range of the scan points to add them to the map
+MAP_SCAN_DISTANCE_THRESHOLD = 12 # Maximum Range of the scan points to add them to the map
 #### START GRAPH SLAM PARAMETERS ####
 
 #### START REFLECTOR EXTRACTOR PARAMETERS ####
