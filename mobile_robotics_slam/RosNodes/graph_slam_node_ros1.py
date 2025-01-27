@@ -279,6 +279,7 @@ class GraphSlamNode:
 
         # Save the data
         np.savetxt(os.path.join(save_path, "robot_optimized.txt"), robot_trajectory)
+        np.savetxt(os.path.join(save_path,  "real_trajectory.txt"), np.array(self.real_trajectory))
         np.savetxt(os.path.join(save_path,  "odom_trajectory.txt"), np.array(self.odom_trajectory))
         np.savetxt(os.path.join(save_path,  "landmarks.txt"), np.array(landmarks))
 
