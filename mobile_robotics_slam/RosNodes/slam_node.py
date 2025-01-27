@@ -71,15 +71,15 @@ class SlamNode(Node):
             my_keypoints = self.my_extractor_keypoints.get_keypoint_info()
             
             # For Each Keypoint List, Save the keypoints to a file
-            with open(os.path.join(path, "example_scans", "falko_keypoints.txt"), "w") as f:
+            with open(os.path.join(package_dir, "example_scans", "falko_keypoints.txt"), "w") as f:
                 for keypoint in falko_keypoints:
                     f.write(" ".join([str(k) for k in keypoint]) + "\n")
 
-            with open(os.path.join(path, "example_scans", "oc_keypoints.txt"), "w") as f:
+            with open(os.path.join(package_dir, "example_scans", "oc_keypoints.txt"), "w") as f:
                 for keypoint in oc_keypoints:
                     f.write(" ".join([str(k) for k in keypoint]) + "\n")
 
-            with open(os.path.join(path, "example_scans", "my_keypoints.txt"), "w") as f:
+            with open(os.path.join(package_dir, "example_scans", "my_keypoints.txt"), "w") as f:
                 for keypoint in my_keypoints:
                     f.write(" ".join([str(k) for k in keypoint]) + "\n")
 

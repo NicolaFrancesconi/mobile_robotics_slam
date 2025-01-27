@@ -72,7 +72,7 @@ class ReflectorExtractor:
     def cluster_points(self, points):
         # Group points into clusters given a maximum distance bewteen points that belong to the same cluster
         clusters = []
-        db = DBSCAN(eps=0.7, min_samples=4)  # Adjust eps and min_samples as needed
+        db = DBSCAN(eps=self.cluster_radius, min_samples=self.min_reflector_points)  # Adjust eps and min_samples as needed
         labels = db.fit_predict(points)
 
         # Group points into clusters

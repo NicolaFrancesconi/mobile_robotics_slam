@@ -14,6 +14,7 @@ for _ in range(file_location_subfolders):
 sys.path.insert(0, path)
 
 from mobile_robotics_slam.Optimizer.GTSAMGraphOptimizer import GTSAMGraphOptimizer
+import mobile_robotics_slam.Params.simulation_params as params
 
 class PoseVertex:
     def __init__(self, id, x, y, theta, point_cloud):
@@ -40,7 +41,7 @@ class GraphHandler:
         self.graph_optimizer = GTSAMGraphOptimizer()
         self.pose_vertices = []
         self.landmark_vertices = []
-        self.pose_base_id = 1000
+        self.pose_base_id = 10000 # Base ID for Pose Vertices to avoid conflicts with Landmark IDs
 
     def get_mapped_landmarks(self):
         mapped_reflectors = []
@@ -78,7 +79,9 @@ class GraphHandler:
         if len(extracted_reflectors) == 0:
                 return False, [], []
         match = False
-        compatibility_graph = construct_reflector_compatibility_graph(extracted_reflectors, mapped_reflectors, 0.02)
+        distance_tolerance = params.REFLECTOR_RELATIVE_DISTANCE_TOLERANCE
+        neighbor_distance = params.REFLECTOR_NEIGHBOR_MAX_DISTANCE
+        compatibility_graph = construct_reflector_compatibility_graph(extracted_reflectors, mapped_reflectors, distance_tolerance, neighbor_distance)
         matched_idxs, unique = find_maximum_clique(compatibility_graph)
         non_matched_idxs = [i for i in range(len(extracted_reflectors)) if i not in [idx[0] for idx in matched_idxs]]
         if unique:
@@ -95,9 +98,10 @@ class GraphHandler:
         if len(extracted_corners) == 0:
                 return False, [], []
         match = False
-        relative_distance_tolerance = 0.03
-        relative_angle_tolerance = 3
-        compatibility_graph = construct_corner_compatibility_graph(extracted_corners, mapped_corners, relative_distance_tolerance, relative_angle_tolerance)
+        relative_distance_tolerance = params.CORNER_RELATIVE_DISTANCE_TOLERANCE
+        relative_angle_tolerance = params.CORNER_RELATIVE_ANGLE_TOLERANCE
+        neighbor_distance = params.CORNER_NEIGHBOR_MAX_DISTANCE
+        compatibility_graph = construct_corner_compatibility_graph(extracted_corners, mapped_corners, relative_distance_tolerance, relative_angle_tolerance, neighbor_distance)
         matched_idxs, unique = find_maximum_clique(compatibility_graph)
         non_matched_idxs = [i for i in range(len(extracted_corners)) if i not in [idx[0] for idx in matched_idxs]]
         if unique:
@@ -131,7 +135,7 @@ class GraphHandler:
                 distances = np.linalg.norm(mapped_corners[:, :2] - position, axis=1)
             else:
                 distances = np.array([1000])
-            if np.min(distances) > 0.4:
+            if np.min(distances) > params.CORNER_ADD_DISTANCE_THRESHOLD:
                 self.graph_optimizer.add_pose_landmark_edge_2D(pose_id, id, position)
                 self.landmark_vertices.append(LandmarkVertex(id, landmarks[extracted_corners[idx][3]]))
 
@@ -145,7 +149,7 @@ class GraphHandler:
                 distances = np.linalg.norm(mapped_reflectors[:, :2] - position, axis=1)
             else:
                 distances = np.array([1000])
-            if np.min(distances) > 2:
+            if np.min(distances) > params.REFLECTOR_ADD_DISTANCE_THRESHOLD:
                 self.graph_optimizer.add_pose_landmark_edge_2D(pose_id, id, position)
                 self.landmark_vertices.append(LandmarkVertex(id, landmarks[extracted_reflectors[idx][2]]))
 
@@ -222,7 +226,7 @@ class GraphHandler:
 
     
     
-def construct_corner_compatibility_graph(extracted, mapped, distance_tolerance, angle_tolerance, neighbor_distance=2):
+def construct_corner_compatibility_graph(extracted, mapped, distance_tolerance, angle_tolerance, neighbor_distance):
     """
     Optimized construction of the compatibility graph.
     """
@@ -259,7 +263,7 @@ def construct_corner_compatibility_graph(extracted, mapped, distance_tolerance, 
 
     return G
 
-def construct_reflector_compatibility_graph(extracted, mapped, distance_tolerance, neighbor_distance=2):
+def construct_reflector_compatibility_graph(extracted, mapped, distance_tolerance, neighbor_distance):
     """
     Optimized construction of the compatibility graph.
     """

@@ -36,12 +36,13 @@ from mobile_robotics_slam.GraphHandler.g2oGraphHandler import GraphHandler as g2
 from mobile_robotics_slam.GraphHandler.GTSAMGraphHandler import GraphHandler as GTSAMGraphHandler
 from mobile_robotics_slam.ICP.ICP_SVD import icp
 from mobile_robotics_slam.MapGenerator.OnlineMap import DynamicMapUpdater
+import mobile_robotics_slam.Params.simulation_params as params
 
 
-DISTANCE_THRESHOLD = 0.4
-ROTATION_THRESHOLD = np.deg2rad(5)
-EXTRACT_CORNER = False
-EXTRACT_REFLECTORS = True
+DISTANCE_THRESHOLD = params.DISTANCE_THRESHOLD
+ROTATION_THRESHOLD = params.ROTATION_THRESHOLD
+EXTRACT_CORNER = params.EXTRACT_CORNER
+EXTRACT_REFLECTORS = params.EXTRACT_REFLECTORS
 
 
 
@@ -58,7 +59,7 @@ class GraphSlamNode(Node):
         self.OdomLastNodePose = np.zeros(3)
         self.OptimizedLastNodePose = np.zeros(3)
         self.OptimizedLastNodeScan = None
-        self.T_robot_laser = self.pose_to_transform([-0.109, 0, 0]) # Set Laser frame position wrt Robot Frame (x,y, theta)
+        self.T_robot_laser = self.pose_to_transform(params.ROBOT_LASER_FRAME_OFFSET) # Set Laser frame position wrt Robot Frame (x,y, theta)
         self.T_laser_robot = np.linalg.inv(self.T_robot_laser)
         self.first_pose_added = False
         self.new_pose_added = False
@@ -73,7 +74,7 @@ class GraphSlamNode(Node):
         self.real_trajectory = []
         self.odom_trajectory = []
 
-        self.unoptimized_graph = UnoptimizedGraph()
+
         self.dynamic_map = DynamicMapUpdater()
         self.dynamic_map.start()
 
@@ -93,23 +94,23 @@ class GraphSlamNode(Node):
 
     def setup_extractor_parameters(self):
         # Set the parameters of the Corner Extractor
-        min_corner_angle = 85
-        max_corner_angle = 95
-        max_intersecton_distance = 0.5
+        min_corner_angle = params.MIN_CORNER_ANGLE
+        max_corner_angle = params.MAX_CORNER_ANGLE
+        max_intersecton_distance = params.MAX_INTERSECTION_DISTANCE
         self.corner_extractor.set_corner_params(max_intersecton_distance, min_corner_angle, max_corner_angle)
 
         # Set the parameters of the Adaptive Segment Detector
-        sigma_ranges = 0.15
-        lambda_angle = 10
-        merge_distance = 0.07
-        min_points_density = 10
-        min_segment_length = 0.5
+        sigma_ranges = params.SIGMA_RANGES
+        lambda_angle = params.LAMBDA_ANGLE
+        merge_distance = params.MERGE_DISTANCE
+        min_points_density = params.MIN_POINT_DENSITY
+        min_segment_length = params.MIN_SEGMENT_LENGTH
         self.corner_extractor.set_detector_params(sigma_ranges, lambda_angle, merge_distance, min_points_density, min_segment_length)
 
         # Set the parameters of the Segment Handler
-        epsilon = 0.1
-        min_density_after_segmentation = 12
-        min_length_after_segmentation = 0.3
+        epsilon = params.EPSILON
+        min_density_after_segmentation = params.MIN_DENSITY_AFTER_SEGMENTATION
+        min_length_after_segmentation = params.MIN_LENGTH_AFTER_SEGMENTATION
         self.corner_extractor.set_handler_params(epsilon, min_density_after_segmentation, min_length_after_segmentation)
 
     def map_timer_callback(self):
@@ -121,7 +122,7 @@ class GraphSlamNode(Node):
         
         for pose, pointcloud in zip(poses, pointclouds):
 
-            distance_mask = pointcloud<7
+            distance_mask = pointcloud<params.MAP_SCAN_DISTANCE_THRESHOLD
             angle = np.linspace(-np.pi, np.pi, len(pointcloud))
             x = pose[0] + pointcloud * np.cos(angle + pose[2])
             y = pose[1] + pointcloud * np.sin(angle + pose[2])
@@ -352,10 +353,6 @@ class GraphSlamNode(Node):
         self.add_last_pose = True    
     
 
-    
-
-
-
 def main(args=None):
     rclpy.init(args=args)
 
@@ -371,57 +368,6 @@ def main(args=None):
         slam_node.destroy_node()
         rclpy.shutdown()
 
-
-class map_pose:
-    def __init__(self):
-        self.x = 0.0
-        self.y = 0.0
-        self.theta = 0.0
-        self.point_cloud = []
-        self.landmarks = []
-
-class UnoptimizedGraph:
-    def __init__(self):
-        self.poses = []
-
-    def add_pose(self, robot_pose, pointcloud, landmarks):
-        pose = map_pose()
-        pose.x = robot_pose[0]
-        pose.y = robot_pose[1]
-        pose.theta = robot_pose[2]
-        pose.point_cloud = pointcloud
-        pose.landmarks = [landmark.get_position() for landmark in landmarks]
-        self.poses.append(pose)
-
-    def generate_map(self):
-        map = []
-        poses = []
-        landmarks = []
-        for pose in self.poses:
-            ranges = pose.point_cloud
-            angles = np.linspace(-np.pi, np.pi, len(ranges))
-            x = pose.x + ranges * np.cos(angles + pose.theta)
-            y = pose.y + ranges * np.sin(angles + pose.theta)
-            map.extend(np.vstack((x, y)).T)
-            poses.append([pose.x, pose.y, pose.theta])
-            landmarks.extend(pose.landmarks)
-
-
-
-        map = np.array(map)
-        poses = np.array(poses)
-        landmarks = np.array(landmarks)
-
-        plt.figure()
-        plt.title("Unoptimized Map")
-        plt.scatter(map[:, 0], map[:, 1], c='g', s=1)
-        plt.plot(poses[:, 0], poses[:, 1], "b")
-        if len(landmarks) > 0:
-            plt.scatter(landmarks[:, 0], landmarks[:, 1], c="r")
-        
-        plt.axis('equal')
-        plt.legend(['Pointcloud', 'Pose', '   Landmark'])
-        plt.show()
 
 if __name__ == "__main__":
     main()
