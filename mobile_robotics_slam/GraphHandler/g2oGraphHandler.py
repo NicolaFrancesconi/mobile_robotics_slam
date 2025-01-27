@@ -14,7 +14,6 @@ for _ in range(file_location_subfolders):
 sys.path.insert(0, path)
 
 from mobile_robotics_slam.Optimizer.g2oGraphOptimizer import GraphOptimizer
-from mobile_robotics_slam.MapGenerator.OnlineMap import DynamicMapUpdater
 import mobile_robotics_slam.Params.simulation_params as params
 
 class PoseVertex:
