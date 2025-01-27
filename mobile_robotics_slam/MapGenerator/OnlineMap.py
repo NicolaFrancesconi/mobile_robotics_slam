@@ -101,7 +101,6 @@ class DynamicMapUpdater:
                 pass
 
             except KeyboardInterrupt:
-                print("Shutting down dynamic map updater.")
-                sys.exit(0)
+                pass
             finally:
                 pass
