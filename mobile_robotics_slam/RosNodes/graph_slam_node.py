@@ -39,10 +39,6 @@ from mobile_robotics_slam.MapGenerator.OnlineMap import DynamicMapUpdater
 import mobile_robotics_slam.Params.simulation_params as params
 
 
-DISTANCE_THRESHOLD = params.DISTANCE_THRESHOLD
-ROTATION_THRESHOLD = params.ROTATION_THRESHOLD
-EXTRACT_CORNER = params.EXTRACT_CORNER
-EXTRACT_REFLECTORS = params.EXTRACT_REFLECTORS
 
 
 
@@ -78,9 +74,9 @@ class GraphSlamNode(Node):
         self.dynamic_map = DynamicMapUpdater()
         self.dynamic_map.start()
 
-        self.odom_sub = message_filters.Subscriber(self, Odometry, "/dingo/odometry")
-        self.scan_sub = message_filters.Subscriber(self, LaserScan, "/diff_drive/scan")
-        self.real_pose_sub = message_filters.Subscriber(self, Odometry, "/diff_drive/real_pose")
+        self.odom_sub = message_filters.Subscriber(self, Odometry, params.ODOM_TOPIC)
+        self.scan_sub = message_filters.Subscriber(self, LaserScan, params.SCAN_TOPIC)
+        self.real_pose_sub = message_filters.Subscriber(self, Odometry, params.REAL_POSE_TOPIC)
         self.map_update_timer = self.create_timer(3, self.map_timer_callback)
 
         # Approximate time synchronizer
@@ -182,9 +178,9 @@ class GraphSlamNode(Node):
         self.real_trajectory.append(np.array([real.pose.pose.position.x, real.pose.pose.position.y, self.quaternion_to_euler(real.pose.pose.orientation.x,real.pose.pose.orientation.y,real.pose.pose.orientation.z,real.pose.pose.orientation.w)]))
         reflectors = []
         corners = []
-        if EXTRACT_CORNER:
+        if params.EXTRACT_CORNER:
             corners = self.extract_corners(scan, laser_estimated_pose)
-        if EXTRACT_REFLECTORS:
+        if params.EXTRACT_REFLECTORS:
             reflectors = self.extract_reflectors(scan, laser_estimated_pose)
         landmarks = reflectors + corners
         laser_optimized_pose = self.graph_handler.add_to_graph(laser_estimated_pose, np.array(scan.ranges), landmarks)
@@ -207,7 +203,7 @@ class GraphSlamNode(Node):
         H_robot_odom, travel_distance, rotation = self.compute_homo_transform(self.OdomReference, odom_pose)
         
         #If Motion Higher than THRESHOLD correct it using ICP
-        if travel_distance > DISTANCE_THRESHOLD or rotation > ROTATION_THRESHOLD or self.add_last_pose:
+        if travel_distance > params.DISTANCE_THRESHOLD or rotation > params.ROTATION_THRESHOLD or self.add_last_pose:
             
             #ICP is WRT Laser Frame so converti H_robot into H_laser
             H_laser_odom = self.T_laser_robot@H_robot_odom@self.T_robot_laser # Homogeneous Transform of LASER due to Odometry estimate)
@@ -232,9 +228,9 @@ class GraphSlamNode(Node):
             #Extract Landmarks from the scan wrt Laser Frame
             reflectors = []
             corners = []
-            if EXTRACT_CORNER:
+            if params.EXTRACT_CORNER:
                 corners = self.extract_corners(scan, laser_estimated_pose)
-            if EXTRACT_REFLECTORS:
+            if params.EXTRACT_REFLECTORS:
                 reflectors = self.extract_reflectors(scan, laser_estimated_pose)
             landmarks = reflectors + corners
             
