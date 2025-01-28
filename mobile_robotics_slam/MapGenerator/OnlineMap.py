@@ -88,7 +88,7 @@ class DynamicMapUpdater:
 
                 ax.set_title("Online Map")
                 ax.set_aspect('equal')
-                ax.legend(loc='upper left', bbox_to_anchor=(1, 1), borderaxespad=0., ncol=3)
+                ax.legend(loc='upper left', bbox_to_anchor=(1.01, 1.0), borderaxespad=0.)
                 print("Map Updated")
                 frame_path = os.path.join(self.frames_dir, f"frame_{frame_count:04d}.png")
                 plt.savefig(frame_path, bbox_inches="tight")
