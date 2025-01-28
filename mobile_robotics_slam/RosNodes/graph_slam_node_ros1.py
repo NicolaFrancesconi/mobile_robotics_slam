@@ -44,6 +44,7 @@ class GraphSlamNode:
         # Declare variables
         self.OdomInitialPose = np.array([None, None, None])
         self.OdomLastNodePose = np.zeros(3)
+        self.ICPLastNodePose = np.zeros(3)
         self.OptimizedLastNodePose = np.zeros(3)
         self.OptimizedLastNodeScan = None
         self.T_robot_laser = self.pose_to_transform(params.ROBOT_LASER_FRAME_OFFSET) # Set Laser frame position wrt Robot Frame (x,y, theta)
@@ -60,6 +61,7 @@ class GraphSlamNode:
     
         self.odom_trajectory = []
         self.real_trajectory = []
+        self.icp_trajectory = []
 
         self.odom_sub = message_filters.Subscriber(params.ODOM_TOPIC, Odometry)
         self.scan_sub = message_filters.Subscriber(params.SCAN_TOPIC, LaserScan)
@@ -154,11 +156,13 @@ class GraphSlamNode:
         """Add the first pose to the graph"""
         self.OdomReference = np.array([odom.pose.pose.position.x, odom.pose.pose.position.y, self.quaternion_to_euler(odom.pose.pose.orientation.x,odom.pose.pose.orientation.y,odom.pose.pose.orientation.z,odom.pose.pose.orientation.w)])
         self.OdomLastNodePose = np.zeros(3) # Initialize First Pose as origin (0,0,0)
+        self.ICPLastNodePose = np.zeros(3) # Initialize First Pose as origin (0,0,0)
         self.OptimizedLastNodePose = np.zeros(3) # Initialize First Pose as origin (0,0,0)
         self.OptimizedLastNodeScan = np.array(scan.ranges)
         laser_estimated_pose = self.transform_to_pose(self.T_robot_laser)
         print("Laser Estimated Pose", laser_estimated_pose) # Initialize Laser Pose as Laser Frame wrt Robot Frame
         self.odom_trajectory.append(np.copy(self.OdomLastNodePose))
+        self.icp_trajectory.append(np.copy(self.OdomLastNodePose))
         reflectors = []
         corners = []
 
@@ -235,13 +239,16 @@ class GraphSlamNode:
             
             #Store Data about the Node for the next iteration
             Tr_odom = self.pose_to_transform(self.OdomLastNodePose)
+            Tr_ICP = self.pose_to_transform(self.ICPLastNodePose)
             self.OdomLastNodePose = self.transform_to_pose(Tr_odom@H_robot_odom)
+            self.ICPLastNodePose = self.transform_to_pose(Tr_ICP@H_robot_icp)
             self.OdomReference = np.copy(odom_pose)
             self.OptimizedLastNodeScan = np.copy(scan.ranges)
 
             #Store Data for Visualization
             self.odom_trajectory.append(np.copy(self.OdomLastNodePose))
             self.real_trajectory.append(np.copy(real_pose))
+            self.icp_trajectory.append(np.copy(self.ICPLastNodePose))
 
             self.new_pose_added = True
             
@@ -271,6 +278,7 @@ class GraphSlamNode:
         np.savetxt(os.path.join(save_path, "robot_optimized.txt"), robot_trajectory)
         np.savetxt(os.path.join(save_path,  "real_trajectory.txt"), np.array(self.real_trajectory))
         np.savetxt(os.path.join(save_path,  "odom_trajectory.txt"), np.array(self.odom_trajectory))
+        np.savetxt(os.path.join(save_path,  "icp_trajectory.txt"), np.array(self.icp_trajectory))
         np.savetxt(os.path.join(save_path,  "landmarks.txt"), np.array(landmarks))
 
         print(f"Saved Data in Folder: {save_path} ")
