@@ -3,13 +3,13 @@ import numpy as np
 #### START GRAPH SLAM PARAMETERS ####
 DISTANCE_THRESHOLD = 0.2  # Distance threshold to create a new node
 ROTATION_THRESHOLD = np.deg2rad(3) # Rotation threshold to create a new node
-EXTRACT_CORNER = False  # Extract corners from the scan
-EXTRACT_REFLECTORS = True   # Extract reflectors from the scan
+EXTRACT_CORNER = True  # Extract corners from the scan
+EXTRACT_REFLECTORS = False   # Extract reflectors from the scan
 ROBOT_LASER_FRAME_OFFSET = [-0.109, 0, 0]  # Offset (x, y, theta) From Robot frame to laser frame
 ODOM_TOPIC = "/odometry/filtered"  # Topic where the scan is published
 SCAN_TOPIC = "/scan"  # Topic where the odometry is published
 REAL_POSE_TOPIC = "/odometry/filtered"  # Topic where the real pose is published
-MAP_SCAN_DISTANCE_THRESHOLD = 9 # Maximum Range of the scan points to add them to the map
+MAP_SCAN_DISTANCE_THRESHOLD = 6 # Maximum Range of the scan points to add them to the map
 #### START GRAPH SLAM PARAMETERS ####
 
 #### START REFLECTOR EXTRACTOR PARAMETERS ####
@@ -36,15 +36,15 @@ MIN_SEGMENT_LENGTH = 0.2 # Minimum length of a segment to be considered
 
 # Set the parameters of the Segment Handler
 EPSILON = 0.12 # Minimum distance between Line and a point to determine if the point is on the line
-MIN_DENSITY_AFTER_SEGMENTATION = 5 # Minimum number of points to consider a segment after segmentation
-MIN_LENGTH_AFTER_SEGMENTATION = 0.2 # Minimum length of a segment to be considered after segmentation
+MIN_DENSITY_AFTER_SEGMENTATION = 8 # Minimum number of points to consider a segment after segmentation
+MIN_LENGTH_AFTER_SEGMENTATION = 0.3 # Minimum length of a segment to be considered after segmentation
 #### END CORNER EXTRACTOR PARAMETERS ####
 
 #### START CORNER MATCHING PARAMETERS ####
-CORNER_RELATIVE_DISTANCE_TOLERANCE = 0.03 # Relative distance between two pairs of compatible corners to add and edge in the compatibility graph
+CORNER_RELATIVE_DISTANCE_TOLERANCE = 0.06 # Relative distance between two pairs of compatible corners to add and edge in the compatibility graph
 CORNER_RELATIVE_ANGLE_TOLERANCE = 3 # Relative angle between two pairs of compatible corners to add and edge in the compatibility graph
-CORNER_NEIGHBOR_MAX_DISTANCE = 2 # Maximum distance between mapped and extracted corners to consider them as possible matches
-CORNER_ADD_DISTANCE_THRESHOLD = 0.3 # Minimum distance between a new corner and existing corners to add it to the map
+CORNER_NEIGHBOR_MAX_DISTANCE = 0.3 # Maximum distance between mapped and extracted corners to consider them as possible matches
+CORNER_ADD_DISTANCE_THRESHOLD = 0.1 # Minimum distance between a new corner and existing corners to add it to the map
 #### END CORNER MATCHING PARAMETERS ####
 
 #### START REFLECTOR MATCHING PARAMETERS ####

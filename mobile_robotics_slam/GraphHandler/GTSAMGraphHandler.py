@@ -87,7 +87,7 @@ class GraphHandler:
         if unique:
             if len(matched_idxs) > 0:
                     match = True
-        elif len(matched_idxs) > 0:
+        elif len(matched_idxs) > 2:
             match = True
         return match, matched_idxs, non_matched_idxs
     
@@ -105,9 +105,9 @@ class GraphHandler:
         matched_idxs, unique = find_maximum_clique(compatibility_graph)
         non_matched_idxs = [i for i in range(len(extracted_corners)) if i not in [idx[0] for idx in matched_idxs]]
         if unique:
-            if len(matched_idxs) > 1:
+            if len(matched_idxs) > 0:
                     match = True
-        elif len(matched_idxs) > 1:
+        elif len(matched_idxs) > 2:
             match = True
         return match, matched_idxs, non_matched_idxs
     

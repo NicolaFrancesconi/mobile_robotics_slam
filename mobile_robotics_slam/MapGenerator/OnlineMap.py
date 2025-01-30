@@ -87,7 +87,10 @@ class DynamicMapUpdater:
                     ax.scatter(landmarks[:, 0], landmarks[:, 1], c="r", label="Landmarks", s=5)
 
                 ax.set_title("Online Map")
-                ax.set_aspect('equal')
+                ax.set_xlim(-16, 16)
+                ax.set_ylim(-16,16)
+                ax.set_xlabel("[m]")
+                ax.set_ylabel("[m]")
                 ax.legend(loc='upper left', bbox_to_anchor=(1.01, 1.0), borderaxespad=0.)
                 print("Map Updated")
                 frame_path = os.path.join(self.frames_dir, f"frame_{frame_count:04d}.png")
