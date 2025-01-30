@@ -180,7 +180,6 @@ class GraphSlamNode:
 
 
     def synchronized_callback(self, odom: Odometry, scan: LaserScan, real: Odometry):
-
         start_time = time.time()
 
         # Store ODOM and REAL pose for Visualization
@@ -194,7 +193,7 @@ class GraphSlamNode:
          
         #Estimate Motion of Robot Using Odometry
         H_robot_odom, travel_distance, rotation = self.compute_homo_transform(self.OdomReference, odom_pose)
-        
+
         #If Motion Higher than THRESHOLD correct it using ICP
         if travel_distance > params.DISTANCE_THRESHOLD or rotation > params.ROTATION_THRESHOLD or self.add_last_pose:
             
@@ -284,17 +283,41 @@ class GraphSlamNode:
         print(f"Saved Data in Folder: {save_path} ")
 
     def extract_reflectors(self, scan: LaserScan, laser_estimated_pose):
-        pointcloud2 = self.reflector_extractor.laser_msg_to_pointcloud_np(scan, laser_estimated_pose)
-        reflectors= self.reflector_extractor.reflector_centre_gauss(pointcloud2, 3)
-        return reflectors
+        pointcloud2 = self.reflector_extractor.laser_msg_to_pointcloud_np(scan, np.zeros(3))
+        reflectors= self.reflector_extractor.reflector_centre_gauss(pointcloud2, 5)
+        #Convert reflectors to robot frame
+        rot_matrix = np.array([[np.cos(laser_estimated_pose[2]), -np.sin(laser_estimated_pose[2])],
+                                [np.sin(laser_estimated_pose[2]), np.cos(laser_estimated_pose[2])]])
+        trans_matrix = np.array([laser_estimated_pose[0], laser_estimated_pose[1]])
+        reflect = [reflector for reflector in reflectors if (0.5 <= np.linalg.norm(reflector.get_position()) <=9)]
+        for i,reflector in enumerate(reflect):
+            pos = reflector.get_position()
+            # Rotate the position of the reflector to laser frame
+            new_pos = rot_matrix@pos + trans_matrix
+            reflect[i].x = new_pos[0]
+            reflect[i].y = new_pos[1]
+
+        return reflect
 
     def extract_corners(self, scan: LaserScan, laser_estimated_pose):
         pointcloud = np.array(scan.ranges)
         field_of_view = scan.angle_max - scan.angle_min
         angle_min = scan.angle_min
-        self.corner_extractor.extract_corners(pointcloud, field_of_view, angle_min, laser_estimated_pose)
-        keypoints = self.corner_extractor.get_corners()
-        return keypoints
+        self.corner_extractor.extract_corners(pointcloud, field_of_view, angle_min, np.zeros(3))
+        rot_matrix = np.array([[np.cos(laser_estimated_pose[2]), -np.sin(laser_estimated_pose[2])],
+                                [np.sin(laser_estimated_pose[2]), np.cos(laser_estimated_pose[2])]])
+        trans_matrix = np.array([laser_estimated_pose[0], laser_estimated_pose[1]])
+        corners = self.corner_extractor.get_corners()
+        corn = [corner for corner in corners if (0.5 <= np.linalg.norm(corner.get_position()) <=9)]
+        for i,reflector in enumerate(corn):
+            pos = reflector.get_position()
+            # Rotate the position of the reflector to laser frame
+            new_pos = rot_matrix@pos + trans_matrix
+            corn[i].x = new_pos[0]
+            corn[i].y = new_pos[1]
+        
+
+        return corn
      
 
     def quaternion_to_euler(self, x, y, z, w):
