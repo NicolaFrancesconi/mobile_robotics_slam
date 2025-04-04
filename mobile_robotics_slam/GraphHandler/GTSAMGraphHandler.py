@@ -42,6 +42,7 @@ class GraphHandler:
         self.pose_vertices = []
         self.landmark_vertices = []
         self.pose_base_id = 10000 # Base ID for Pose Vertices to avoid conflicts with Landmark IDs
+        self.initial_time = time.time()
 
     def get_mapped_landmarks(self):
         mapped_reflectors = []
@@ -182,9 +183,12 @@ class GraphHandler:
         # Add Landmark Vertices Of Non Matched Landmarks
         self.add_non_matched_corners(extracted_corners, pose_id, landmarks, non_matched_indices_cor, mapped_corners)
         self.add_non_matched_reflectors(extracted_reflectors, pose_id, landmarks, non_matched_indices_ref, mapped_reflectors)
+        
 
-        if  match_cor or match_ref :
-            self.optimize_graph()
+        if  (match_cor or match_ref) :
+            if time.time() - self.initial_time > 10:
+                self.initial_time = time.time()
+                self.optimize_graph()
             
         last_pose = self.graph_optimizer.get_pose_2D(pose_id)
         last_pose = np.array([last_pose[0], last_pose[1], last_pose[2]])

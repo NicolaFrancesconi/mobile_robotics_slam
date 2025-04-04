@@ -38,6 +38,7 @@ def calculate_ATE_and_AOE(real_trajectory, estimated_trajectory):
 ATE, AOE, SLAM_position_error, SLAM_orientation_error = calculate_ATE_and_AOE(real_trajectory, estimated_trajectory)
 print("Absolute Trajectory Error: ", ATE)
 print("Absolute Orientation Error: ", AOE)
+print("Last Pose Position Error: ", SLAM_position_error[-1])
 
 
 # Calculate the absolute trajectory error and the absolute orientation error for the odometry trajectory
@@ -47,12 +48,18 @@ print("Absolute Orientation Error Odometry: ", AOE)
 
 ATE, AOE,icp_position_error, icp_orientation_error = calculate_ATE_and_AOE(real_trajectory, icp_trajectory)
 
+travelled_distance = 0
+for i in range(1, len(real_trajectory)):
+    travelled_distance += np.linalg.norm(real_trajectory[i, :2] - real_trajectory[i-1, :2])
+
+print("Travelled Distance: ", travelled_distance)
+
 #Plot the real, estimated and odometry trajectories
 plt.figure()
-plt.plot(real_trajectory[:,0], real_trajectory[:,1], label="Real", linestyle="--", linewidth=2.5, color="red")
-plt.plot(estimated_trajectory[:,0], estimated_trajectory[:,1], label="Graph SLAM", color="blue", linewidth=1)
-plt.plot(odometry_trajectory[:,0], odometry_trajectory[:,1], label="Odom", color="orange", linewidth=1)
-plt.plot(icp_trajectory[:,0], icp_trajectory[:,1], label="ICP", color="green", linewidth=1)
+plt.plot(real_trajectory[:,1], real_trajectory[:,0], label="Real", linestyle="--", linewidth=4.5, color="red")
+plt.plot(estimated_trajectory[:,1], estimated_trajectory[:,0], label="Graph SLAM", color="blue", linewidth=2)
+plt.plot(odometry_trajectory[:,1], odometry_trajectory[:,0], label="Odom", color="orange", linewidth=2)
+plt.plot(icp_trajectory[:,1], icp_trajectory[:,0], label="ICP", color="green", linewidth=2)
 plt.legend()
 plt.title("Trajectory Comparison")
 plt.xlabel("X [m]")

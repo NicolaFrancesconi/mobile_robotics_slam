@@ -17,13 +17,15 @@ from mobile_robotics_slam.Extractors.Reflectors.ReflectorExtractor import Reflec
 data = np.loadtxt(os.path.join(path, "example_scans", "intensity_scan.txt"))
 scan_ranges = data[:, 0]
 scan_intensities = data[:, 1]
-angle_min = -np.pi/2
+angle_min = -np.pi
 field_of_view = 2*np.pi
 
 # Extract Reflectors
 reflector_extractor = ReflectorExtractor()
+reflector_extractor.max_range_extraction = 30
 
-robot_pose = np.array([1, 0, np.pi/3])
+
+robot_pose = np.zeros(3)
 reflector_extractor.extract_reflectors(scan_ranges, scan_intensities, field_of_view, angle_min, robot_pose)
 landmarks = reflector_extractor.get_reflectors()
 positions = np.array([landmark.get_position() for landmark in landmarks])

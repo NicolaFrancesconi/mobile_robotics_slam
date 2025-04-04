@@ -9,6 +9,39 @@ for _ in range(file_location_subfolders):
 sys.path.insert(0, path)
 
 from mobile_robotics_slam.Extractors.Corners.SegmentHandler import SegmentHandler
+from mobile_robotics_slam.Extractors.Corners.SegmentDetector import SegmentDetector
+
+########################################################################################
+##Test the BreakPointDetector
+########################################################################################
+
+# Create an instance of the BreakPointDetector
+detector = SegmentDetector()
+
+# Set parameters for the detector
+sigma_ranges = 0.3
+lambda_angle = 10
+merge_distance_threshold = 0.07
+min_points_density = 0
+min_segment_length = 0.30
+
+detector.set_sigma_ranges(sigma_ranges)
+detector.set_lambda_angle(lambda_angle)
+detector.set_merge_distance(0.07)
+detector.set_min_points_density(0)
+detector.set_min_segment_length(0.30)
+
+
+#Prepare the Laser data
+ranges = np.loadtxt(os.path.join(path, "example_scans", "intensity_scan.txt")) # Load the ranges from the reference scan
+ranges = ranges[:, 0] # Get only the ranges
+field_of_view = 2 * np.pi # Field of view of the laser scan
+angle_min = -np.pi # Minimum angle of the laser scan
+
+angles = [angle_min + i * field_of_view / len(ranges) for i in range(len(ranges))]
+
+# Run the detector: Detect Breakpoints and Generate Segments
+detector.detect_segments(ranges, field_of_view, angle_min)
 
 ## Test Segments for the Segment Handler
 
@@ -49,6 +82,7 @@ def generate_corner_segment(num_points1=100, num_points2=100, angle_degrees=45, 
 segments = []
 segments.append(generate_corner_segment())
 
+segments = detector.segments
 
 # Create a segment handler
 segment_handler = SegmentHandler()
@@ -58,13 +92,13 @@ for segment in segments:
 
 segment_handler.plot_segments() # Show the segments before the Ramer-Douglas-Peucker algorithm
 segment_handler.set_epsilon(0.1) # Set the epsilon parameter for the Ramer-Douglas-Peucker algorithm
-segment_handler.set_min_density_after_segmentation(10) # Set the minimum points density parameter for the Ramer-Douglas-Peucker algorithm
-segment_handler.set_min_length_after_segmentation(0.3) # Set the minimum length after segmentation parameter for the Ramer-Douglas-Peucker algorithm
+segment_handler.set_min_density_after_segmentation(8) # Set the minimum points density parameter for the Ramer-Douglas-Peucker algorithm
+segment_handler.set_min_length_after_segmentation(0.15) # Set the minimum length after segmentation parameter for the Ramer-Douglas-Peucker algorithm
 segment_handler.Ramer_Douglas_Peucker_Segmentation() # Run the Ramer-Douglas-Peucker algorithm
 segment_handler.plot_segments() # Show the segments after the Ramer-Douglas-Peucker algorithm
 
 
-for segment in segment_handler.segments:
-    segment.compute_polar_form() # Compute the polar form for each segment
-    segment.plot_fitted_line() # Plot the fitted line for each
+# for segment in segment_handler.segments:
+#     segment.compute_polar_form() # Compute the polar form for each segment
+#     segment.plot_fitted_line() # Plot the fitted line for each
 

@@ -14,10 +14,10 @@ MAP_SCAN_DISTANCE_THRESHOLD = 12 # Maximum Range of the scan points to add them 
 
 #### START REFLECTOR EXTRACTOR PARAMETERS ####
 MIN_REFLECTOR_POINTS = 4 # Minimum number of points to consider a reflector
-MIN_REFLECTOR_RADIUS = 0.02 # Minimum radius of a reflector
+MIN_REFLECTOR_RADIUS = 0.05 # Minimum radius of a reflector
 MAX_REFLECTOR_RADIUS = 0.15 # Maximum radius of a reflector
 MIN_REFLECTOR_INTENSITY = 1000 # Minimum intensity of a reflector
-CLUSTER_RADIUS = 0.8 # Maximum distance between two reflectors to consider them as part of the same cluster
+CLUSTER_RADIUS = 0.4 # Maximum distance between two reflectors to consider them as part of the same cluster
 MAX_RANGE_EXTRACTION = 30 # Maximum range of the reflectors
 MIN_RANGE_EXTRACTION = 0.01 # Minimum range of the reflectors
 #### END REFLECTOR EXTRACTOR PARAMETERS ####
@@ -31,25 +31,25 @@ MAX_INTERSECTION_DISTANCE = 0.5 # Maximum distance between the intersection poin
 SIGMA_RANGES = 0.15 # Standard deviation of the Gaussian kernel for the range
 LAMBDA_ANGLE = 10   # Parameter of the Adaptive Segment Detector
 MERGE_DISTANCE = 0.07 # Maximum distance between two segments endpoints to merge them
-MIN_POINT_DENSITY = 10 # Minimum number of points to consider a segment
-MIN_SEGMENT_LENGTH = 0.5 # Minimum length of a segment to be considered
+MIN_POINT_DENSITY = 6 # Minimum number of points to consider a segment
+MIN_SEGMENT_LENGTH = 0.3 # Minimum length of a segment to be considered
 
 # Set the parameters of the Segment Handler
 EPSILON = 0.1 # Minimum distance between Line and a point to determine if the point is on the line
-MIN_DENSITY_AFTER_SEGMENTATION = 12 # Minimum number of points to consider a segment after segmentation
+MIN_DENSITY_AFTER_SEGMENTATION = 6 # Minimum number of points to consider a segment after segmentation
 MIN_LENGTH_AFTER_SEGMENTATION = 0.3 # Minimum length of a segment to be considered after segmentation
 #### END CORNER EXTRACTOR PARAMETERS ####
 
 #### START CORNER MATCHING PARAMETERS ####
 CORNER_RELATIVE_DISTANCE_TOLERANCE = 0.03 # Relative distance between two pairs of compatible corners to add and edge in the compatibility graph
 CORNER_RELATIVE_ANGLE_TOLERANCE = 3 # Relative angle between two pairs of compatible corners to add and edge in the compatibility graph
-CORNER_NEIGHBOR_MAX_DISTANCE = 2 # Maximum distance between mapped and extracted corners to consider them as possible matches
-CORNER_ADD_DISTANCE_THRESHOLD = 0.3 # Minimum distance between a new corner and existing corners to add it to the map
+CORNER_NEIGHBOR_MAX_DISTANCE = 5 # Maximum distance between mapped and extracted corners to consider them as possible matches
+CORNER_ADD_DISTANCE_THRESHOLD = 0.2 # Minimum distance between a new corner and existing corners to add it to the map
 #### END CORNER MATCHING PARAMETERS ####
 
 #### START REFLECTOR MATCHING PARAMETERS ####
-REFLECTOR_RELATIVE_DISTANCE_TOLERANCE = 0.03 # Relative distance between two pairs of compatible reflectors to add and edge in the compatibility graph
-REFLECTOR_NEIGHBOR_MAX_DISTANCE = 2 # Maximum distance between mapped and extracted reflectors to consider them as possible matches
+REFLECTOR_RELATIVE_DISTANCE_TOLERANCE = 0.2 # Relative distance between two pairs of compatible reflectors to add and edge in the compatibility graph
+REFLECTOR_NEIGHBOR_MAX_DISTANCE = 8 # Maximum distance between mapped and extracted reflectors to consider them as possible matches
 REFLECTOR_ADD_DISTANCE_THRESHOLD = 1.5  # Minimum distance between a new reflector and existing reflectors to add it to the map
 #### END REFLECTOR MATCHING PARAMETERS ####
 

@@ -147,15 +147,26 @@ class SegmentHandler:
 
     def plot_segments(self):
         """Plot the segments"""
+
+        colormap = plt.cm.get_cmap("tab20", len(self.segments))
         for segment in self.segments:
+            color = colormap(self.segments.index(segment))
             x = np.array([point[0] for point in segment.points])
             y = np.array([point[1] for point in segment.points])
-            plt.scatter(x, y, s=1)
-        plt.title("Segments")
-        plt.axis('equal')
-        plt.grid()
-        plt.xlabel('x')
-        plt.ylabel('y')
+            plt.scatter(x, y, s=5, color=color)
+            plt.scatter(x[0], y[0], s=150, color=color, marker='s', edgecolors='black', zorder=3)  
+            plt.scatter(x[-1], y[-1], s=150, color=color, marker='^', edgecolors='black', zorder=3)
+
+        plt.plot(color='black', label='Segments')
+        plt.scatter([], [], marker='s',s=150, color='black', label='Segments Startpoints')
+        plt.scatter([], [], marker='^',s=150, color='black', label='Segments Endpoints')
+        plt.title("Ramer-Douglas-Peucker Segmentation")
+        plt.xlim(-8, 8)
+        plt.ylim(-6, 3)
+        plt.legend()
+        #plt.grid()
+        plt.xlabel('X [m]')
+        plt.ylabel('Y [m]')
         plt.show()
 
     def line_fit_two_points(self, first_point, last_point):

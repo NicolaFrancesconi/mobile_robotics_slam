@@ -19,6 +19,7 @@ class ReflectorExtractor:
     def __init__(self):
         self.reflector_list = []
         self.scan_points = []
+        self.scan_intensities = []
         self.reflector_clusters = []
         self.min_reflector_points = 4
         self.min_reflector_radius = 0.02
@@ -50,7 +51,7 @@ class ReflectorExtractor:
         scan_angles = np.linspace(angle_min, angle_min + field_of_view, len(scan_ranges))
 
         self.scan_points = np.vstack((scan_ranges*np.cos(scan_angles+ robot_pose[2])+ robot_pose[0], scan_ranges*np.sin(scan_angles+ robot_pose[2])+ robot_pose[1])).T
-
+        self.scan_intensities = np.copy(intensities)
         ranges = scan_ranges[intensities > self.min_reflector_intensity]
         angles = scan_angles[intensities > self.min_reflector_intensity]
 
@@ -82,6 +83,18 @@ class ReflectorExtractor:
                 cluster_points = points[labels == label]
                 clusters.append(cluster_points)
         self.reflector_clusters = clusters
+
+        #Plot clusters
+        for cluster in clusters:
+            plt.scatter(cluster[:, 0], cluster[:, 1], s=9)
+        
+        plt.xlim(-8, 8)
+        plt.ylim(-6, 3)
+        plt.title('Clusters of High Intensity Points With DBSCAN')
+        plt.xlabel('X [m]')
+        plt.ylabel('Y [m]')
+        #plt.legend()
+        plt.show()
         return clusters
         
 
@@ -89,6 +102,19 @@ class ReflectorExtractor:
         reflectors = []
         for cluster in self.reflector_clusters:
             x_center, y_center, radius = self.fit_circle(cluster)
+            # # Plot the Points and the Circle
+            # plt.scatter(cluster[:, 0], cluster[:, 1], c='red', s=30, label='Cluster Points') # type: ignore
+            # plt.scatter(x_center, y_center, c='black', s=20, label='Fitted Circle Center') # type: ignore
+            # circle = plt.Circle((x_center, y_center), radius, color='black', fill=False) # type: ignore
+            # plt.gca().add_artist(circle)
+            # plt.xlim(x_center- 0.2, x_center + 0.2)
+            # plt.ylim(y_center - 0.2, y_center + 0.2)
+            # plt.gca().set_aspect('equal', adjustable='datalim')
+            # plt.title('Cluster Points and Fitted Circle')
+            # plt.xlabel('X [m]')
+            # plt.ylabel('Y [m]')
+            # plt.legend()
+            # plt.show()
             if radius > self.min_reflector_radius and radius < self.max_reflector_radius:
                 reflectors.append(Reflector(x_center, y_center, cluster, radius))
         self.reflector_list = reflectors
@@ -115,12 +141,22 @@ class ReflectorExtractor:
     def plot_reflectors(self):
         # Plot Reflectors Fitted Circles and Scan Points
         plt.figure()
-        plt.scatter(self.scan_points[:, 0], self.scan_points[:, 1], c='b', s=1, label='Laser Scan') # type: ignore
+        HI_mask = self.scan_intensities >= self.min_reflector_intensity
+        LI_mask = self.scan_intensities < self.min_reflector_intensity
+        plt.scatter(self.scan_points[LI_mask, 0], self.scan_points[LI_mask, 1], c='b', s=5, label='Low Intensity Points') # type: ignore
+        plt.scatter(self.scan_points[HI_mask, 0], self.scan_points[HI_mask, 1], c='red', s=5, label='High Intensity Points') # type: ignore
         for i, reflector in enumerate(self.reflector_list):
-            plt.scatter(reflector.x, reflector.y, c='r', s=10, label='Reflector')
-            circle = plt.Circle((reflector.x, reflector.y), reflector.radius, color='black', fill=False) # type: ignore
-            plt.gca().add_artist(circle)
-        plt.axis('equal')
+            plt.scatter(reflector.x, reflector.y, c='orange', s=160, edgecolors='black', alpha=0.9)
+            # circle = plt.Circle((reflector.x, reflector.y), reflector.radius, color='black', fill=False) # type: ignore
+            # plt.gca().add_artist(circle)
+
+        # #Add to legend the reflector circles
+        plt.scatter([], [], c='orange', s=160, edgecolors='black', alpha=0.9, label='Reflector')
+        plt.xlim(-8, 8)
+        plt.ylim(-6, 3)
+        plt.title('Point Cloud with Intensity')
+        plt.xlabel('X [m]')
+        plt.ylabel('Y [m]')
         plt.legend()
         plt.show()
 

@@ -210,18 +210,27 @@ class SegmentDetector:
         
         x = self.ranges * np.cos(self.angles)
         y = self.ranges * np.sin(self.angles)
-        plt.scatter(x, y, s=1, label='Laser Scan Data', color='yellow')
+        plt.scatter(x, y, s=5, label='Laser Scan Data', color='blue')
+        colormap = plt.cm.get_cmap("tab20", len(self.segments))
 
-        for i ,segment in enumerate(self.segments):
-            x = [point[0] for point in segment]
-            y = [point[1] for point in segment]
-            plt.plot(x, y, label='Segment_'+str(i))
+        for i, segment in enumerate(self.segments):  
+            x = [point[0] for point in segment]  
+            y = [point[1] for point in segment]  
+            color = colormap(i)  # Generate a random color  
 
-        plt.xlabel("X")
-        plt.ylabel("Y")
+            plt.plot(x, y, color=color, linewidth=3, zorder=1)  
+            plt.scatter(x[0], y[0], s=150, color=color, marker='s', edgecolors='black', zorder=3)  
+            plt.scatter(x[-1], y[-1], s=150, color=color, marker='^', edgecolors='black', zorder=3)  
+
+        plt.scatter([], [], marker='s', s=150, color='black', label='Segments Startpoints')
+        plt.scatter([], [], marker='^', s=150, color='black', label='Segments Endpoints')
+
+        plt.xlabel("X [m]")
+        plt.ylabel("Y [m]")
         plt.legend()
-        plt.title("Detected Segments in Synthetic Laser Scan Data")
-        plt.axis("equal")
+        plt.title("Adaptive Breakpoint Detector Segmentation")
+        plt.xlim(-8, 8)
+        plt.ylim(-6, 3)
         plt.show()
 
     def plot_detected_breakpoints(self):

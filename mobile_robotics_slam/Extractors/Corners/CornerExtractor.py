@@ -192,13 +192,16 @@ class CornerExtractor:
         if self.corners is None:    
             raise ValueError("Corners not computed")
         plt.figure()
-        plt.title("Segments and Extracted Corners")
+        plt.title("Extracted Corners")
         x_seg = []
         y_seg = []
         for i, segment in enumerate(self.segment_handler.segments):
             x= [point[0] for point in segment.points]
             y= [point[1] for point in segment.points]
-            plt.plot(x, y,  label = "Segment"+str(i))
+            x_seg.extend(x)
+            y_seg.extend(y)
+
+        plt.scatter(x_seg, y_seg, color='blue', s=5, label = "Segments")
 
 
         x_corn  = []
@@ -206,14 +209,15 @@ class CornerExtractor:
         for corner in self.corners:
             x_corn.append(corner.x)
             y_corn.append(corner.y)
-            #plt.quiver(corner.x, corner.y, corner.orientation[0], corner.orientation[1], color=['r'], scale=5)
+            
 
-        plt.scatter(x_corn, y_corn, color='red', s=10, label = "Corners")
-        plt.xlabel('x')
-        plt.ylabel('y')
-        plt.axis('equal')
+        plt.scatter(x_corn, y_corn, color='red', s=250, label = "Corners", marker='^', edgecolors='black')
+        plt.xlabel('X')
+        plt.ylabel('Y')
+        plt.xlim(-8, 8)
+        plt.ylim(-6, 3)
         plt.legend()
-        plt.show() 
+        plt.show()
 
 
 

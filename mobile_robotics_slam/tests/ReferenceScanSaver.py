@@ -24,19 +24,13 @@ class ReferenceScanGenerator(Node):
         
     def scan_callback(self, msg: LaserScan):
         # Save the Scan Ranges into a txt file
-        with open(os.path.join(path, "example_scans", "scan1.txt"), "w") as f:
+        with open(os.path.join(path, "example_scans", "CliqueScan2.txt"), "w") as f:
             for i in range(len(msg.ranges)):
-                string = str(msg.ranges[i]) + "\n" # Save only the ranges
-                #string = str(msg.ranges[i]) + " " + str(msg.intensities[i]) + "\n" # Save the ranges and intensities
+                #string = str(msg.ranges[i]) + "\n" # Save only the ranges
+                string = str(msg.ranges[i]) + " " + str(msg.intensities[i]) + "\n" # Save the ranges and intensities
                 f.write(string)
         print("Reference Scan Saved")
-        self.destroy_node()
-        rclpy.shutdown()
-        exit()
-    
-    def signal_handler (self, sig, frame):
-        self.destroy_node()
-        rclpy.shutdown()
+
         
         
 
@@ -44,10 +38,9 @@ def main(args=None):
     rclpy.init(args=args)
 
     scan_generator = ReferenceScanGenerator()
-    signal.signal(signal.SIGINT, scan_generator.signal_handler )
 
     try:
-        rclpy.spin(scan_generator)
+        rclpy.spin_once(scan_generator)
     except KeyboardInterrupt:
         pass
     finally:

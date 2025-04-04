@@ -63,7 +63,7 @@ def process_landmarks(file_name, map_reflectors, distance_threshold=0.3, nn_thre
     min_error = np.min(errors)
     return errors, mean_error, max_error, min_error
 
-file_name = os.path.join(path, "example_scans", "landmarks_test.txt")
+file_name = os.path.join(path, "trajectory_data", "landmarks.txt")
 
 # Process the file
 errors, mean_error, max_error, min_error = process_landmarks(file_name, map_reflectors)
